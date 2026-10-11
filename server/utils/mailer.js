@@ -37,7 +37,8 @@ function escapeHtml(str) {
 }
 
 async function sendVerificationEmail(user, token) {
-    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email?token=${encodeURIComponent(token)}`;
+    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').trim().replace(/\/+$/, '');
+    const link = `${clientUrl}/verify-email?token=${encodeURIComponent(token)}`;
     await sendMail({
         to: user.email,
         subject: 'Xác thực email tài khoản của bạn',
@@ -50,6 +51,10 @@ async function sendVerificationEmail(user, token) {
                         Xác thực email
                     </a>
                 </p>
+                <p style="font-size: 13px; color: #6B6B65">
+                    Nếu nút không mở được, hãy copy đường link sau và dán vào trình duyệt:
+                </p>
+                <p style="font-size: 13px; word-break: break-all; color: #2F5233">${link}</p>
                 <p style="font-size: 13px; color: #6B6B65">
                     Link có hiệu lực trong 24 giờ. Nếu bạn không đăng ký tài khoản, hãy bỏ qua email này.
                 </p>
