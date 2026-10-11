@@ -1,0 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+@plugin "daisyui";
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  max-width: 100%;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* ---------- Hero motion banner (Home) ---------- */
+.hero-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: hero-drift 18s ease-in-out infinite alternate;
+}
+.hero-blob-1 { width: 520px; height: 520px; background: #4E7A4F; top: -180px; left: -120px; }
+.hero-blob-2 { width: 420px; height: 420px; background: #7C9473; bottom: -200px; right: 10%; animation-duration: 22s; animation-delay: -6s; opacity: 0.35; }
+.hero-blob-3 { width: 300px; height: 300px; background: #1E3A22; top: 20%; right: -80px; animation-duration: 26s; animation-delay: -12s; }
+
+.hero-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.hero-in {
+  opacity: 0;
+  animation: hero-fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+.hero-pop {
+  opacity: 0;
+  animation: hero-pop 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+.hero-float { animation: hero-float 6s ease-in-out infinite; animation-delay: var(--f, 0s); }
+.hero-kenburns { animation: hero-kenburns 7s ease-out forwards; }
+.hero-progress { transform-origin: left; animation: hero-progress linear forwards; }
+
+@keyframes hero-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(80px, 40px) scale(1.15); }
+}
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hero-pop {
+  from { opacity: 0; translate: 0 30px; scale: 0.94; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes hero-kenburns {
+  from { transform: scale(1.12); }
+  to { transform: scale(1); }
+}
+@keyframes hero-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-blob, .hero-float, .hero-kenburns { animation: none; }
+  .hero-in, .hero-pop { animation: none; opacity: 1; }
+}
+
+/* ---------- Promo banner (Home): 2 ảnh crossfade + zoom chậm ---------- */
+.promo-slide {
+  animation: promo-kenburns 12s ease-in-out infinite;
+}
+.promo-slide-2 {
+  opacity: 0;
+  animation: promo-kenburns 12s ease-in-out infinite, promo-crossfade 12s ease-in-out infinite;
+}
+@keyframes promo-kenburns {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+@keyframes promo-crossfade {
+  0%, 40% { opacity: 0; }
+  50%, 90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .promo-slide, .promo-slide-2 { animation: none; }
+}
+
+/* ---------- Hero slide 1: cụm ảnh trượt vào từ phải + lướt nhẹ ---------- */
+.hero-slide-in {
+  opacity: 0;
+  animation: hero-slide-in 1s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+.hero-pan { animation: hero-pan 9s ease-in-out infinite alternate; }
+@keyframes hero-slide-in {
+  from { opacity: 0; translate: 70px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes hero-pan {
+  from { transform: scale(1.1) translateX(-3%); }
+  to { transform: scale(1.1) translateX(3%); }
+}
+
+/* ---------- Reveal khi cuộn tới (components/Reveal.jsx) ---------- */
+.reveal {
+  opacity: 0;
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    translate 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--d, 0ms);
+}
+.reveal-up { translate: 0 48px; }
+.reveal-left { translate: -56px 0; }
+.reveal-right { translate: 56px 0; }
+.reveal.is-visible { opacity: 1; translate: 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide-in { animation: none; opacity: 1; }
+  .hero-pan { animation: none; }
+  .reveal { opacity: 1; translate: none; transition: none; }
+}
+
+/* ---------- Dropdown (components/Dropdown.jsx): đậm dần khi mở, mờ dần khi đóng ---------- */
+.dropdown-menu {
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 -6px;
+  transition:
+    opacity 0.2s ease,
+    translate 0.2s ease,
+    visibility 0s linear 0.2s; /* ẩn hẳn sau khi mờ xong để không bấm nhầm */
+}
+.dropdown-menu.is-open {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-menu { translate: none; }
+}
