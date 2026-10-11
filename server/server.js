@@ -2,9 +2,14 @@ require('dotenv').config();
 const cors = require('cors');
 const express = require('express');
 const app = express();
+const { apiLimiter, orderLimiter, chatLimiter } = require('./middleware/rateLimit');
+
+// Render đứng sau 1 lớp proxy: để req.ip lấy đúng IP thật của client từ X-Forwarded-For
+app.set('trust proxy', 1);
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
+app.use('/api', apiLimiter);
 
 const PORT = process.env.PORT || 5000;
 const pool = require('./db');
@@ -20,7 +25,7 @@ const adminStatsRoutes = require("./routes/admin.stats.route")
 const orderRoutes = require('./routes/orders.routes');
 
 app.use('/api/users', userRoutes);
-app.use('/api/chat', chatRoutes);
+app.use('/api/chat', chatLimiter, chatRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/admin/products', adminRoutes);
@@ -93,11 +98,10 @@ app.get('/api/products/:id', async (req, res) => {
     }
 });
 
-
-// Hiện chỉ giao tại 2 thành phố này (khớp với dropdown ở trang Checkout)
 const DELIVERY_CITIES = ["Thành phố Hà Nội", "Thành phố Hồ Chí Minh"];
+const MAX_QTY_PER_ITEM = 20;
 
-app.post("/api/orders", optionalAuth, async (req, res) => {
+app.post("/api/orders", optionalAuth, orderLimiter, async (req, res) => {
     const customer_name = String(req.body.customer_name || "").trim();
     const address = String(req.body.address || "").trim();
     // Chuẩn hoá SĐT: bỏ khoảng trắng/dấu chấm/gạch, +84 -> 0
@@ -135,6 +139,14 @@ app.post("/api/orders", optionalAuth, async (req, res) => {
                 return res.status(400).json({ message: "Thiếu cart cho khách vãng lai" });
             }
             items = cart.map((i) => ({ product_id: i.id, quantity: i.quantity }));
+        }
+
+        if (items.length > 50) {
+            return res.status(400).json({ message: "Giỏ hàng có quá nhiều sản phẩm" });
+        }
+        // Chặn số lượng âm/thập phân/quá lớn (số âm sẽ làm tăng tồn kho và giảm tổng tiền)
+        if (items.some((i) => !Number.isInteger(i.quantity) || i.quantity < 1 || i.quantity > MAX_QTY_PER_ITEM)) {
+            return res.status(400).json({ message: `Số lượng mỗi sản phẩm phải từ 1 đến ${MAX_QTY_PER_ITEM}` });
         }
 
         await client.query("BEGIN");

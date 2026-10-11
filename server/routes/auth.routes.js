@@ -5,10 +5,11 @@ const router = express.Router();
 const pool = require('../db');
 const { generateToken } = require('../utils/token');
 const { verifyToken } = require('../middleware/auth.middleware');
+const { loginLimiter, loginIpLimiter, registerLimiter } = require('../middleware/rateLimit');
 
 const SALT_ROUNDS = 10;
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -43,7 +44,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginIpLimiter, loginLimiter, async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {

@@ -3,28 +3,12 @@ const router = express.Router();
 const pool = require("../db");
 const { verifyToken } = require("../middleware/auth.middleware");
 const { restoreStock } = require("../utils/orderStock");
+const { trackLimiter } = require("../middleware/rateLimit");
 
 // Chuẩn hoá SĐT để so sánh: bỏ ký tự không phải số, +84/84 -> 0
 function normalizePhone(phone) {
     const digits = String(phone || "").replace(/\D/g, "");
     return digits.startsWith("84") ? "0" + digits.slice(2) : digits;
-}
-
-// Giới hạn đơn giản chống dò SĐT: tối đa 10 lần tra cứu / phút / IP
-const trackAttempts = new Map();
-function trackLimiter(req, res, next) {
-    const ip = (req.headers["x-forwarded-for"] || req.ip || "").split(",")[0].trim();
-    const now = Date.now();
-    const entry = trackAttempts.get(ip);
-    if (!entry || now - entry.start > 60_000) {
-        if (trackAttempts.size > 5000) trackAttempts.clear(); // tránh phình bộ nhớ
-        trackAttempts.set(ip, { start: now, count: 1 });
-        return next();
-    }
-    if (++entry.count > 10) {
-        return res.status(429).json({ error: "Bạn tra cứu quá nhiều lần, vui lòng thử lại sau 1 phút" });
-    }
-    next();
 }
 
 // POST /api/orders/track - khách (kể cả không đăng nhập) tra đơn bằng mã đơn + SĐT
