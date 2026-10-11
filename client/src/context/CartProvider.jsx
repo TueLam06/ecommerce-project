@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { CartContext } from "./CartContext";
 import { useAuth } from "./AuthContext";
-
-const API_BASE =
-    import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-const CART_API = `${API_BASE}/api/cart`;
+import { getCart, addCartItem, updateCartItem, removeCartItem, clearCartRequest } from "../api/cart";
 
 export function CartProvider({ children }) {
     const { token } = useAuth();
@@ -41,22 +37,17 @@ export function CartProvider({ children }) {
     // Lấy cart từ DB, chuẩn hoá product_id -> id để phần còn lại của app (CartPage, Checkout...) không cần sửa
     const fetchCart = useCallback(async (authToken) => {
         try {
-            const res = await fetch(CART_API, {
-                headers: { Authorization: `Bearer ${authToken}` },
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setCart(
-                    data.map((item) => ({
-                        id: item.product_id,
-                        name: item.name,
-                        price: item.price,
-                        image: item.image,
-                        stock: item.stock,
-                        quantity: item.quantity,
-                    }))
-                );
-            }
+            const data = await getCart(authToken);
+            setCart(
+                data.map((item) => ({
+                    id: item.product_id,
+                    name: item.name,
+                    price: item.price,
+                    image: item.image,
+                    stock: item.stock,
+                    quantity: item.quantity,
+                }))
+            );
         } catch (err) {
             console.error("Lỗi tải giỏ hàng:", err);
         }
@@ -66,14 +57,7 @@ export function CartProvider({ children }) {
     const mergeLocalCartToServer = useCallback(async (localCart, authToken) => {
         for (const item of localCart) {
             try {
-                await fetch(CART_API, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${authToken}`,
-                    },
-                    body: JSON.stringify({ product_id: item.id, quantity: item.quantity }),
-                });
+                await addCartItem(item.id, item.quantity, authToken);
             } catch (err) {
                 console.error("Lỗi merge cart:", err);
             }
@@ -132,24 +116,12 @@ export function CartProvider({ children }) {
         }
 
         try {
-            const res = await fetch(CART_API, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ product_id: product.id, quantity: 1 }),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                showToast(data.error || "Không thêm được vào giỏ hàng");
-                return;
-            }
+            await addCartItem(product.id, 1, token);
             await fetchCart(token);
             showToast(`Đã thêm "${product.name}" vào giỏ hàng`);
         } catch (err) {
             console.error(err);
-            showToast("Lỗi kết nối, thử lại sau");
+            showToast(err.message || "Không thêm được vào giỏ hàng");
         }
     }
 
@@ -165,15 +137,8 @@ export function CartProvider({ children }) {
         }
 
         try {
-            const res = await fetch(`${CART_API}/${product.id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ quantity: existing.quantity + 1 }),
-            });
-            if (res.ok) await fetchCart(token);
+            await updateCartItem(product.id, existing.quantity + 1, token);
+            await fetchCart(token);
         } catch (err) {
             console.error(err);
         }
@@ -195,15 +160,8 @@ export function CartProvider({ children }) {
         }
 
         try {
-            const res = await fetch(`${CART_API}/${product.id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ quantity: existing.quantity - 1 }),
-            });
-            if (res.ok) await fetchCart(token);
+            await updateCartItem(product.id, existing.quantity - 1, token);
+            await fetchCart(token);
         } catch (err) {
             console.error(err);
         }
@@ -216,11 +174,8 @@ export function CartProvider({ children }) {
         }
 
         try {
-            const res = await fetch(`${CART_API}/${product.id}`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) await fetchCart(token);
+            await removeCartItem(product.id, token);
+            await fetchCart(token);
         } catch (err) {
             console.error(err);
         }
@@ -234,10 +189,7 @@ export function CartProvider({ children }) {
         }
 
         try {
-            await fetch(CART_API, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await clearCartRequest(token);
         } catch (err) {
             console.error(err);
         } finally {

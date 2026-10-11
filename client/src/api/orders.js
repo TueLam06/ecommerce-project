@@ -1,6 +1,10 @@
 import { authFetch } from "./http";
 
-export const getMyOrders = (token) => authFetch("/api/orders/my", { token });
+// Đặt hàng: có token thì lấy giỏ trong DB, không có thì body phải kèm cart
+export const createOrder = (body, token) =>
+    authFetch("/api/orders", { method: "POST", body, token });
+
+export const getMyOrders =(token) => authFetch("/api/orders/my", { token });
 
 export const getMyOrderById = (id, token) =>
     authFetch(`/api/orders/my/${id}`, { token });

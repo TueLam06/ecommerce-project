@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import { sendChatMessage } from "../api/chat";
 
 function ChatPage() {
     const [messages, setMessages] = useState([]);
@@ -25,25 +26,7 @@ function ChatPage() {
         setLoading(true);
 
         try {
-            const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/chat`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        message: userMessage,
-                        history: messages,
-                    }),
-                }
-            );
-
-            if (!res.ok) {
-                throw new Error("Chat API error");
-            }
-
-            const data = await res.json();
+            const data = await sendChatMessage(userMessage, messages);
 
             const botText = data.message || "Xin lỗi, tôi không có câu trả lời.";
 

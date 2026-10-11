@@ -3,6 +3,7 @@ import HeroBanner from "../components/HeroBanner";
 import Reveal from "../components/Reveal";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { getProducts } from "../api/products";
 
 function Home() {
     const [products, setProducts] = useState([]);
@@ -19,13 +20,7 @@ function Home() {
         .slice(0, 4);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/products`)
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error("Không lấy được dữ liệu sản phẩm");
-                }
-                return res.json();
-            })
+        getProducts()
             .then((data) => {
                 setProducts(data);
                 setLoading(false);

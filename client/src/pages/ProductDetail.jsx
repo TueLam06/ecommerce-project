@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
+import { getProductById } from "../api/products";
 
 function ProductDetail() {
     const { id } = useParams();
@@ -11,13 +12,7 @@ function ProductDetail() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/products/${id}`)
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error("Không tìm thấy sản phẩm");
-                }
-                return res.json();
-            })
+        getProductById(id)
             .then((data) => {
                 setProduct(data);
                 setLoading(false);

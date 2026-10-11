@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ProductCard from "../components/ProductCard";
 import CategoryIcon from "../components/CategoryIcon";
 import Dropdown from "../components/Dropdown";
+import { getProducts, getCategories } from "../api/products";
 
 const SORT_OPTIONS = [
     { value: "newest-desc", label: "Mới nhất", sort: "newest", order: "desc" },
@@ -21,8 +22,7 @@ function Products() {
 
     // Lấy danh sách categories 1 lần khi mount
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/categories`)
-            .then((res) => res.json())
+        getCategories()
             .then((data) => setCategories(data))
             .catch((err) => console.error("Lỗi tải categories:", err));
     }, []);
@@ -31,21 +31,15 @@ function Products() {
     useEffect(() => {
         const selected =
             SORT_OPTIONS.find((o) => o.value === sortValue) || SORT_OPTIONS[0];
-        const params = new URLSearchParams({
+        const params = {
             sort: selected.sort,
             order: selected.order,
-        });
+        };
         if (categoryValue !== "all") {
-            params.set("category", categoryValue);
+            params.category = categoryValue;
         }
 
-        fetch(`${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`)
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error("Không lấy được dữ liệu sản phẩm");
-                }
-                return res.json();
-            })
+        getProducts(params)
             .then((data) => {
                 setProducts(data);
                 setLoading(false);

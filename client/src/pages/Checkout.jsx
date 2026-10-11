@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import { saveLastGuestOrder } from "../api/orders";
+import { createOrder, saveLastGuestOrder } from "../api/orders";
 import { CITIES } from "../constants/vnAddress";
 import Combobox from "../components/Combobox";
 
@@ -126,17 +126,7 @@ function Checkout() {
         };
 
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/orders`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(token && { Authorization: `Bearer ${token}` }),
-                },
-                body: JSON.stringify(body),
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Đặt hàng thất bại");
+            const data = await createOrder(body, token);
 
             setOrderResult({ orderId: data.orderId, total: data.total, phone });
             if (!token) saveLastGuestOrder(data.orderId, phone);

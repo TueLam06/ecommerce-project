@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Nơi duy nhất đọc địa chỉ backend. Giá trị lấy từ .env.development (npm run dev) hoặc .env.production (npm run build)
+const API_BASE = import.meta.env.VITE_API_URL;
 
 async function handleResponse(res) {
     const data = await res.json().catch(() => ({}));
@@ -9,14 +10,19 @@ async function handleResponse(res) {
 }
 
 export async function authFetch(path, { method = 'GET', body, token } = {}) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: body ? JSON.stringify(body) : undefined,
-    });
+    let res;
+    try {
+        res = await fetch(`${API_BASE}${path}`, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: body ? JSON.stringify(body) : undefined,
+        });
+    } catch {
+        throw new Error('Lỗi kết nối, thử lại sau');
+    }
     return handleResponse(res);
 }
 
