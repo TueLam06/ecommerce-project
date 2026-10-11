@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ResendVerification from '../components/ResendVerification';
 
 export default function RegisterPage() {
     const { register } = useAuth();
-    const navigate = useNavigate();
+    const [registered, setRegistered] = useState(null); // { email, message } sau khi đăng ký xong
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -23,8 +24,8 @@ export default function RegisterPage() {
 
         setSubmitting(true);
         try {
-            await register(name, email, password);
-            navigate('/');
+            const data = await register(name, email, password);
+            setRegistered({ email: data.email, message: data.message, emailSent: data.emailSent });
         } catch (err) {
             setError(err.message);
         } finally {
@@ -50,6 +51,29 @@ export default function RegisterPage() {
             </div>
 
             <div className="flex-1 flex items-center justify-center px-6 py-12">
+                {registered ? (
+                <div className="w-full max-w-sm">
+                    <h2 className="text-2xl text-[#1A1A18] mb-3" style={{ fontFamily: "'Fraunces', serif" }}>
+                        Kiểm tra hộp thư của bạn
+                    </h2>
+                    <p className="text-sm text-[#3A3A36] mb-2">{registered.message}</p>
+                    {registered.emailSent ? (
+                        <p className="text-sm text-[#6B6B65] mb-8">
+                            Link xác thực đã được gửi tới <strong className="text-[#1A1A18]">{registered.email}</strong>.
+                            Không thấy email thì xem thử trong mục Spam.
+                        </p>
+                    ) : (
+                        <div className="mb-8" />
+                    )}
+                    <ResendVerification email={registered.email} />
+                    <p className="text-sm text-[#6B6B65] mt-6">
+                        Đã xác thực?{' '}
+                        <Link to="/login" className="text-[#2F5233] underline underline-offset-2">
+                            Đăng nhập
+                        </Link>
+                    </p>
+                </div>
+                ) : (
                 <div className="w-full max-w-sm">
                     <h2 className="text-2xl text-[#1A1A18] mb-1" style={{ fontFamily: "'Fraunces', serif" }}>
                         Tạo tài khoản
@@ -122,6 +146,7 @@ export default function RegisterPage() {
                         </button>
                     </form>
                 </div>
+                )}
             </div>
         </div>
     );

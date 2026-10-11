@@ -212,6 +212,18 @@ app.post("/api/orders", optionalAuth, orderLimiter, async (req, res) => {
         client.release();
     }
 });
-app.listen(PORT, () => {
-    console.log(`Server đang chạy tại http://localhost:${PORT}`);
-});
+
+// Thêm cột email_verified nếu chưa có. Tài khoản cũ coi như đã xác thực, tài khoản mới mặc định chưa
+pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT true;
+    ALTER TABLE users ALTER COLUMN email_verified SET DEFAULT false;
+`)
+    .then(() => {
+        app.listen(PORT, () => {
+            console.log(`Server đang chạy tại http://localhost:${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error('Migrate DB lỗi:', err);
+        process.exit(1);
+    });

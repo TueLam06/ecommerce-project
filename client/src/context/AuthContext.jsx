@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { loginRequest, registerRequest, getMeRequest } from '../api/auth';
+import { loginRequest, registerRequest, getMeRequest, verifyEmailRequest } from '../api/auth';
 
 const AuthContext = createContext(null);
 
@@ -33,8 +33,14 @@ export function AuthProvider({ children }) {
         return data.user;
     }
 
+    // Đăng ký xong chưa đăng nhập ngay, phải xác thực email trước
     async function register(name, email, password) {
-        const data = await registerRequest({ name, email, password });
+        return registerRequest({ name, email, password });
+    }
+
+    // Bấm link trong email -> xác thực xong thì đăng nhập luôn
+    async function verifyEmail(emailToken) {
+        const data = await verifyEmailRequest(emailToken);
         localStorage.setItem('token', data.token);
         setToken(data.token);
         setUser(data.user);
@@ -48,7 +54,7 @@ export function AuthProvider({ children }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, verifyEmail, logout }}>
             {children}
         </AuthContext.Provider>
     );

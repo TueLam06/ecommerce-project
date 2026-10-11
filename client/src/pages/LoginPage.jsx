@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ResendVerification from '../components/ResendVerification';
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -11,11 +12,13 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [unverifiedEmail, setUnverifiedEmail] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError('');
+        setUnverifiedEmail('');
         setSubmitting(true);
         try {
             const user = await login(email, password);
@@ -32,6 +35,7 @@ export default function LoginPage() {
             }
         } catch (err) {
             setError(err.message);
+            if (err.code === 'EMAIL_NOT_VERIFIED') setUnverifiedEmail(email);
         } finally {
             setSubmitting(false);
         }
@@ -113,6 +117,12 @@ export default function LoginPage() {
                             {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
                         </button>
                     </form>
+
+                    {unverifiedEmail && (
+                        <div className="mt-4">
+                            <ResendVerification key={unverifiedEmail} email={unverifiedEmail} />
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

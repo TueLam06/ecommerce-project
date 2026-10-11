@@ -4,7 +4,9 @@ const API_BASE = import.meta.env.VITE_API_URL;
 async function handleResponse(res) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-        throw new Error(data.error || data.message || 'Có lỗi xảy ra, vui lòng thử lại');
+        const err = new Error(data.error || data.message || 'Có lỗi xảy ra, vui lòng thử lại');
+        err.code = data.code; // vd: EMAIL_NOT_VERIFIED
+        throw err;
     }
     return data;
 }

@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -20,4 +21,31 @@ function verifyTokenString(token) {
     return jwt.verify(token, JWT_SECRET);
 }
 
-module.exports = { generateToken, verifyTokenString };
+// Token trong link xác thực email ký bằng secret riêng, để không dùng thay token đăng nhập được
+const EMAIL_SECRET = `${JWT_SECRET}:verify-email`;
+
+// Dấu vân tay của mật khẩu hiện tại: đăng ký lại (đổi mật khẩu) thì link cũ hết hiệu lực
+function passwordFingerprint(passwordHash) {
+    return crypto.createHash('sha256').update(String(passwordHash)).digest('hex').slice(0, 16);
+}
+
+// user cần có id, email, password (hash)
+function generateEmailToken(user) {
+    return jwt.sign(
+        { id: user.id, email: user.email, pwf: passwordFingerprint(user.password) },
+        EMAIL_SECRET,
+        { expiresIn: '24h' }
+    );
+}
+
+function verifyEmailToken(token) {
+    return jwt.verify(token, EMAIL_SECRET);
+}
+
+module.exports = {
+    generateToken,
+    verifyTokenString,
+    generateEmailToken,
+    verifyEmailToken,
+    passwordFingerprint,
+};

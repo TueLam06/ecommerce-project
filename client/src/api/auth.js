@@ -7,3 +7,9 @@ export const loginRequest = ({ email, password }) =>
     authFetch('/api/auth/login', { method: 'POST', body: { email, password } });
 
 export const getMeRequest = (token) => authFetch('/api/auth/me', { token });
+
+export const verifyEmailRequest = (token) =>
+    authFetch('/api/auth/verify-email', { method: 'POST', body: { token } });
+
+export const resendVerificationRequest = (email) =>
+    authFetch('/api/auth/resend-verification', { method: 'POST', body: { email } });

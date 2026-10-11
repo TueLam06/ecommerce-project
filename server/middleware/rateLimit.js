@@ -37,11 +37,19 @@ const loginIpLimiter = createLimiter({
     message: 'Bạn đăng nhập sai quá nhiều lần, vui lòng thử lại sau 15 phút',
 });
 
-// Đăng ký: 5 tài khoản / giờ / IP
+// Đăng ký: 10 lần thành công / giờ / IP (nhập sai, email trùng... không bị tính)
 const registerLimiter = createLimiter({
     windowMs: 60 * 60_000,
-    limit: 5,
+    limit: 10,
+    skipFailedRequests: true,
     message: 'Bạn đăng ký quá nhiều tài khoản, vui lòng thử lại sau',
+});
+
+// Gửi lại email xác thực: 3 lần / 15 phút / IP (mỗi lần tốn 1 mail trong quota Brevo)
+const resendVerificationLimiter = createLimiter({
+    windowMs: 15 * 60_000,
+    limit: 3,
+    message: 'Bạn gửi lại email quá nhiều lần, vui lòng thử lại sau 15 phút',
 });
 
 // Đặt hàng: 5 đơn / 10 phút, theo user nếu đã đăng nhập, theo IP nếu là khách
@@ -71,6 +79,7 @@ module.exports = {
     loginLimiter,
     loginIpLimiter,
     registerLimiter,
+    resendVerificationLimiter,
     orderLimiter,
     trackLimiter,
     chatLimiter,

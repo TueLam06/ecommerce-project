@@ -14,6 +14,7 @@ import RegisterPage from "./pages/RegisterPage";
 import OrderHistory from "./pages/OrderHistory";
 import MyOrderDetail from "./pages/MyOrderDetail";
 import TrackOrder from "./pages/TrackOrder";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 import PrivateRoute from "./routes/PrivateRoute";
 import AdminRoute from "./routes/AdminRoute";
@@ -46,6 +47,7 @@ function App() {
                                             <Route path="/track-order" element={<TrackOrder />} />
                                             <Route path="/login" element={<LoginPage h/>} />
                                             <Route path="/register" element={<RegisterPage />} />
+                                            <Route path="/verify-email" element={<VerifyEmailPage />} />
                                             <Route
                                                 path="/orders"
                                                 element={<PrivateRoute><OrderHistory /></PrivateRoute>}
