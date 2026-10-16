@@ -1,3 +1,7 @@
 node_modules/
 .idea/
 .vscode/
+
+# Ghi chú cá nhân & cấu hình Claude (không commit)
+ROADMAP.md
+.claude/
