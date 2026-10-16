@@ -2,7 +2,7 @@ require('dotenv').config();
 const cors = require('cors');
 const express = require('express');
 const app = express();
-const { apiLimiter, chatLimiter } = require('./middleware/rateLimit');
+const { apiLimiter, chatLimiter } = require('./middleware/rateLimit.middleware');
 
 // Render đứng sau 1 lớp proxy: để req.ip lấy đúng IP thật của client từ X-Forwarded-For
 app.set('trust proxy', 1);

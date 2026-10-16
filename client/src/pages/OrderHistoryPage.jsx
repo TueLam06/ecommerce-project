@@ -15,7 +15,7 @@ const FILTERS = [{ value: "", label: "Tất cả" }].concat(
     Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))
 );
 
-function OrderHistory() {
+function OrderHistoryPage() {
     const { token } = useAuth();
     const [orders, setOrders] = useState([]);
     const [filter, setFilter] = useState("");
@@ -175,4 +175,4 @@ function OrderHistory() {
     );
 }
 
-export default OrderHistory;
+export default OrderHistoryPage;

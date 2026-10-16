@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require("../config/db");
 const { verifyToken, optionalAuth } = require("../middleware/auth.middleware");
 const { restoreStock } = require("../utils/orderStock");
-const { trackLimiter, orderLimiter } = require("../middleware/rateLimit");
+const { trackLimiter, orderLimiter } = require("../middleware/rateLimit.middleware");
 
 // Chuẩn hoá SĐT để so sánh: bỏ ký tự không phải số, +84/84 -> 0
 function normalizePhone(phone) {

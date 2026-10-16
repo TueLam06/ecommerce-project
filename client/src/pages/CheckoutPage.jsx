@@ -67,7 +67,7 @@ function FieldError({ id, message }) {
     );
 }
 
-function Checkout() {
+function CheckoutPage() {
     const { cart, total, clearCart } = useCart();
     const { token } = useAuth();
     const [formData, setFormData] = useState({ name: "", phone: "", city: "", ward: "", street: "" });
@@ -364,4 +364,4 @@ function Checkout() {
     );
 }
 
-export default Checkout;
+export default CheckoutPage;

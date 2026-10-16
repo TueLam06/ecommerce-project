@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getProducts } from "../api/products";
 
-function Home() {
+function HomePage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -166,4 +166,4 @@ function ProductSection({ eyebrow, title, subtitle, products, linkTo = "/product
     );
 }
 
-export default Home;
+export default HomePage;

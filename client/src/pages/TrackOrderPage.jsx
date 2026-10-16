@@ -8,7 +8,7 @@ const fraunces = { fontFamily: "'Fraunces', serif" };
 const inter = { fontFamily: "'Inter', sans-serif" };
 
 // Tra cứu đơn hàng cho khách không đăng nhập: nhập mã đơn + số điện thoại
-function TrackOrder() {
+function TrackOrderPage() {
     const location = useLocation();
     // Vừa đặt hàng xong (Checkout chuyển sang kèm state) thì tra luôn
     const fromCheckout = location.state?.orderId && location.state?.phone ? location.state : null;
@@ -124,4 +124,4 @@ function TrackOrder() {
     );
 }
 
-export default TrackOrder;
+export default TrackOrderPage;

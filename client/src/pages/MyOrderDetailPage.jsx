@@ -8,7 +8,7 @@ import OrderDetailView from "../components/OrderDetailView";
 const fraunces = { fontFamily: "'Fraunces', serif" };
 const inter = { fontFamily: "'Inter', sans-serif" };
 
-function MyOrderDetail() {
+function MyOrderDetailPage() {
     const { id } = useParams();
     const { token } = useAuth();
     const [order, setOrder] = useState(null);
@@ -90,4 +90,4 @@ function MyOrderDetail() {
     );
 }
 
-export default MyOrderDetail;
+export default MyOrderDetailPage;

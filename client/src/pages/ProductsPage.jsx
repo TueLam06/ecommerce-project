@@ -12,7 +12,7 @@ const SORT_OPTIONS = [
     { value: "name-desc", label: "Tên: Z-A", sort: "name", order: "desc" },
 ];
 
-function Products() {
+function ProductsPage() {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -173,4 +173,4 @@ function Products() {
     );
 }
 
-export default Products;
+export default ProductsPage;

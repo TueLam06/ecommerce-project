@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { getProductById } from "../api/products";
 
-function ProductDetail() {
+function ProductDetailPage() {
     const { id } = useParams();
     const { addToCart } = useCart();
 
@@ -143,4 +143,4 @@ function ProductDetail() {
     );
 }
 
-export default ProductDetail;
+export default ProductDetailPage;

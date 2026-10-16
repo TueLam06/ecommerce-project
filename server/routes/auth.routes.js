@@ -16,7 +16,7 @@ const {
     loginIpLimiter,
     registerLimiter,
     resendVerificationLimiter,
-} = require('../middleware/rateLimit');
+} = require('../middleware/rateLimit.middleware');
 
 const SALT_ROUNDS = 10;
 
