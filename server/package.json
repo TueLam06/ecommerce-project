@@ -1,8 +1,8 @@
 {
-  "name": "ecomerce-server",
+  "name": "ecommerce-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "REST API Express + PostgreSQL cho website thương mại điện tử Stuff Corner",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
@@ -25,5 +25,10 @@
     "multer": "^2.3.0",
     "pg": "^8.23.0",
     "zod": "^4.5.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TueLam06/ecommerce-project.git",
+    "directory": "server"
   }
 }

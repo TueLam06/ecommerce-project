@@ -1,5 +1,5 @@
 {
-  "name": "my-react-app",
+  "name": "ecommerce-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,8 +12,6 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "daisyui": "^5.7.28",
-    "express": "^5.2.1",
-    "it": "^1.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
@@ -31,17 +29,17 @@
     "globals": "^17.11.0",
     "vite": "^8.2.2"
   },
-  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
-  "main": "eslint.config.js",
+  "description": "Frontend React cho website thương mại điện tử Stuff Corner",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TueLam06/newproject.git"
+    "url": "git+https://github.com/TueLam06/ecommerce-project.git",
+    "directory": "client"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/TueLam06/newproject/issues"
+    "url": "https://github.com/TueLam06/ecommerce-project/issues"
   },
-  "homepage": "https://github.com/TueLam06/newproject#readme"
+  "homepage": "https://github.com/TueLam06/ecommerce-project#readme"
 }

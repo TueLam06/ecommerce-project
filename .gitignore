@@ -5,3 +5,6 @@ node_modules/
 # Ghi chú cá nhân & cấu hình Claude (không commit)
 ROADMAP.md
 .claude/
+
+# File gọi thử API cá nhân (có thể chứa token)
+*.http
