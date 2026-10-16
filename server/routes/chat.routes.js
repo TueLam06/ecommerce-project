@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('./db');
-const model = require('./gemini');
+const pool = require('../config/db');
+const model = require('../config/gemini');
 const { z } = require('zod')
 
 const chatResponseSchema = z.object({
@@ -9,7 +9,7 @@ const chatResponseSchema = z.object({
     productIds: z.array(z.number()).describe("Danh sách id sản phẩm được gợi ý, để trống nếu không có sản phẩm phù hợp"),
 })
 
-const buildSystemPrompt = require('./prompts/systemPrompt');
+const buildSystemPrompt = require('../prompts/systemPrompt');
 const structuredModel = model.withStructuredOutput(chatResponseSchema);
 
 router.post('/', async (req, res) => {

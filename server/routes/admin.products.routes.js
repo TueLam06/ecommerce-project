@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
-const cloudinary = require("../cloudinary");
+const pool = require("../config/db");
+const cloudinary = require("../config/cloudinary");
 const { verifyToken, requireAdmin } = require("../middleware/auth.middleware");
 
 router.use(verifyToken, requireAdmin);

@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 
-const pool = require('../db');
+const pool = require('../config/db');
 const {
     generateToken,
     generateEmailToken,
