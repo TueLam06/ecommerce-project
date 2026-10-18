@@ -160,28 +160,38 @@ function ProductSlide({ product, onAdd }) {
                 >
                     {product.name}
                 </h2>
-                {product.description && (
+                {product.short_description && (
                     <p
                         className="hero-in text-[#D8E2D2] text-base md:text-lg max-w-xl leading-relaxed mb-6 line-clamp-2"
                         style={{ "--d": "160ms" }}
                     >
-                        {product.description.split("\n")[0]}
+                        {product.short_description}
                     </p>
                 )}
                 <p
                     className="hero-in text-2xl md:text-3xl mb-8"
                     style={{ fontFamily: "'Fraunces', serif", "--d": "200ms" }}
                 >
-                    {Number(product.price).toLocaleString("vi-VN")}₫
+                    {product.variant_count > 0 && <span className="mr-2 text-base text-[#B7C9AF]">Từ</span>}
+                    {Number(product.variant_count > 0 ? product.min_price : product.price).toLocaleString("vi-VN")}₫
                 </p>
                 <div className="hero-in flex flex-wrap gap-4" style={{ "--d": "260ms" }}>
-                    <button
-                        type="button"
-                        onClick={onAdd}
-                        className="rounded-md bg-[#F5F3EE] text-[#2F5233] px-6 py-3 font-medium hover:bg-white transition-colors"
-                    >
-                        Thêm vào giỏ hàng
-                    </button>
+                    {product.variant_count > 0 ? (
+                        <Link
+                            to={`/products/${product.id}`}
+                            className="rounded-md bg-[#F5F3EE] text-[#2F5233] px-6 py-3 font-medium hover:bg-white transition-colors"
+                        >
+                            Chọn phiên bản
+                        </Link>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={onAdd}
+                            className="rounded-md bg-[#F5F3EE] text-[#2F5233] px-6 py-3 font-medium hover:bg-white transition-colors"
+                        >
+                            Thêm vào giỏ hàng
+                        </button>
+                    )}
                     <Link
                         to={`/products/${product.id}`}
                         className="rounded-md border border-[#7C9473] text-[#F5F3EE] px-6 py-3 font-medium hover:bg-white/5 transition-colors"

@@ -56,7 +56,7 @@ function Cart({cart, total, onIncrease, onDecrease, onRemove,}) {
                     <div className="rounded-lg border border-[#D9D6CC] bg-white">
                         {cart.map((item, index) => (
                             <div
-                                key={item.id}
+                                key={`${item.id}-${item.variant_id ?? 0}`}
                                 className={`flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between ${
                                     index !== cart.length - 1
                                         ? "border-b border-[#D9D6CC]"
@@ -68,6 +68,12 @@ function Cart({cart, total, onIncrease, onDecrease, onRemove,}) {
                                     <h3 className="font-medium text-[#1A1A18]">
                                         {item.name}
                                     </h3>
+
+                                    {item.variant_name && (
+                                        <p className="mt-0.5 text-sm text-[#6B6B65]">
+                                            Phiên bản: {item.variant_name}
+                                        </p>
+                                    )}
 
                                     <p className="mt-1 text-sm text-[#6B6B65]">
                                         {formatVND(item.price)} / sản phẩm

@@ -111,6 +111,9 @@ function OrderDetailView({ order }) {
                                             <span className="text-[#6B6F63] italic text-sm"> (ngừng kinh doanh)</span>
                                         )}
                                     </div>
+                                    {item.variant_name && (
+                                        <div className="text-sm text-[#6B6F63]">{item.variant_name}</div>
+                                    )}
                                     <div className="text-sm text-[#6B6F63]">
                                         {formatVND(item.price_at_purchase)} × {item.quantity}
                                     </div>

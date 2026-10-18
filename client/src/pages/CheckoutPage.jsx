@@ -121,7 +121,7 @@ function CheckoutPage() {
             phone,
             address: `${formData.street.trim()}, ${formData.ward}, ${formData.city}`,
             ...(!token && {
-                cart: cart.map((item) => ({ id: item.id, quantity: item.quantity })),
+                cart: cart.map((item) => ({ id: item.id, variant_id: item.variant_id ?? null, quantity: item.quantity })),
             }),
         };
 
@@ -219,11 +219,14 @@ function CheckoutPage() {
                 <div className="flex-1 space-y-0">
                     {cart.map((item) => (
                         <div
-                            key={item.id}
+                            key={`${item.id}-${item.variant_id ?? 0}`}
                             className="flex items-baseline justify-between py-3 border-t border-[#F5F3EE]/15"
                         >
                             <div style={inter} className="pr-4">
                                 <div className="text-[15px]">{item.name}</div>
+                                {item.variant_name && (
+                                    <div className="text-[#B9C4AE] text-sm">{item.variant_name}</div>
+                                )}
                                 <div className="text-[#B9C4AE] text-sm">x{item.quantity}</div>
                             </div>
                             <div style={inter} className="text-[15px] whitespace-nowrap">

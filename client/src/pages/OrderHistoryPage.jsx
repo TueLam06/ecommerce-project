@@ -133,6 +133,9 @@ function OrderHistoryPage() {
                                         )}
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[15px] text-[#1F2420] truncate">{item.product_name}</div>
+                                            {item.variant_name && (
+                                                <div className="text-sm text-[#6B6F63] truncate">{item.variant_name}</div>
+                                            )}
                                             <div className="text-sm text-[#6B6F63]">x{item.quantity}</div>
                                         </div>
                                         <div className="text-[15px] text-[#1F2420] whitespace-nowrap">

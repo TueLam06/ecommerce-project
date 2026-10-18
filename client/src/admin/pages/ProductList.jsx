@@ -99,24 +99,32 @@ export default function ProductList() {
                             <td className="px-4 py-3">#{p.id}</td>
                             <td className="px-4 py-3">{p.name}</td>
                             <td className="px-4 py-3">
-                                {Number(p.price).toLocaleString("vi-VN")}đ
+                                {p.variant_count > 0 && <span className="text-[#6B6B65]">Từ </span>}
+                                {Number(p.variant_count > 0 ? p.min_price : p.price).toLocaleString("vi-VN")}đ
                             </td>
                             <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                    <span>{p.stock}</span>
-                                    <button
-                                        onClick={() => handleQuickStockAdjust(p, "add")}
-                                        className="w-6 h-6 rounded border border-[#D9D6CC] text-[#2F5233] hover:bg-[#EFEDE6] leading-none"
-                                    >
-                                        +
-                                    </button>
-                                    <button
-                                        onClick={() => handleQuickStockAdjust(p, "subtract")}
-                                        className="w-6 h-6 rounded border border-[#D9D6CC] text-[#B3413B] hover:bg-[#EFEDE6] leading-none"
-                                    >
-                                        -
-                                    </button>
-                                </div>
+                                {p.variant_count > 0 ? (
+                                    <span>
+                                        {p.total_stock}{" "}
+                                        <span className="text-xs text-[#6B6B65]">({p.variant_count} phiên bản)</span>
+                                    </span>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <span>{p.stock}</span>
+                                        <button
+                                            onClick={() => handleQuickStockAdjust(p, "add")}
+                                            className="w-6 h-6 rounded border border-[#D9D6CC] text-[#2F5233] hover:bg-[#EFEDE6] leading-none"
+                                        >
+                                            +
+                                        </button>
+                                        <button
+                                            onClick={() => handleQuickStockAdjust(p, "subtract")}
+                                            className="w-6 h-6 rounded border border-[#D9D6CC] text-[#B3413B] hover:bg-[#EFEDE6] leading-none"
+                                        >
+                                            -
+                                        </button>
+                                    </div>
+                                )}
                             </td>
                             <td className="px-4 py-3">
                                     <span

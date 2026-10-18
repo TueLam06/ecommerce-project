@@ -190,6 +190,9 @@ export default function OrderDetail() {
                             </td>
                             <td className="px-4 py-3 text-[#1A1A18]">
                                 {item.product_name}
+                                {item.variant_name && (
+                                    <span className="text-[#6B6B65]"> — {item.variant_name}</span>
+                                )}
                                 {item.product_id === null && (
                                     <span className="text-[#6B6B65] italic"> (đã xóa)</span>
                                 )}

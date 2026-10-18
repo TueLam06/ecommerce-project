@@ -76,10 +76,11 @@ router.get("/:id", async (req, res) => {
         }
 
         const itemsResult = await pool.query(
-            `SELECT oi.id, oi.product_id, oi.product_name, oi.quantity, oi.price_at_purchase,
-                    p.image, p.is_active AS product_is_active
+            `SELECT oi.id, oi.product_id, oi.product_name, oi.variant_name, oi.quantity, oi.price_at_purchase,
+                    COALESCE(v.image, p.image) AS image, p.is_active AS product_is_active
              FROM order_items oi
              LEFT JOIN products p ON oi.product_id = p.id
+             LEFT JOIN product_variants v ON v.id = oi.variant_id
              WHERE oi.order_id = $1`,
             [id]
         );

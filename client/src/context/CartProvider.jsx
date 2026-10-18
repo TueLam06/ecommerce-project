@@ -35,12 +35,15 @@ export function CartProvider({ children }) {
     }, [cart, token]);
 
     // Lấy cart từ DB, chuẩn hoá product_id -> id để phần còn lại của app (CartPage, Checkout...) không cần sửa
+    // Một dòng giỏ = (id, variant_id); variant_id null nếu sản phẩm không có phiên bản
     const fetchCart = useCallback(async (authToken) => {
         try {
             const data = await getCart(authToken);
             setCart(
                 data.map((item) => ({
                     id: item.product_id,
+                    variant_id: item.variant_id ?? null,
+                    variant_name: item.variant_name ?? null,
                     name: item.name,
                     price: item.price,
                     image: item.image,
@@ -57,7 +60,7 @@ export function CartProvider({ children }) {
     const mergeLocalCartToServer = useCallback(async (localCart, authToken) => {
         for (const item of localCart) {
             try {
-                await addCartItem(item.id, item.quantity, authToken);
+                await addCartItem(item.id, item.variant_id ?? null, item.quantity, authToken);
             } catch (err) {
                 console.error("Lỗi merge cart:", err);
             }
@@ -105,23 +108,37 @@ export function CartProvider({ children }) {
 
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-    async function addToCart(product) {
+    // Hai dòng giỏ là một khi cùng sản phẩm và cùng phiên bản (variant_id null = không có phiên bản)
+    const sameLine = (a, b) => a.id === b.id && (a.variant_id ?? null) === (b.variant_id ?? null);
+
+    // variant: phiên bản đã chọn ({ id, name, price, stock, image }), bỏ trống với sản phẩm không có phiên bản
+    async function addToCart(product, variant = null) {
+        const line = {
+            id: product.id,
+            variant_id: variant ? variant.id : null,
+            variant_name: variant ? variant.name : null,
+            name: product.name,
+            price: variant ? variant.price : product.price,
+            image: variant?.image || product.image,
+            stock: variant ? variant.stock : product.stock,
+        };
+
         if (!token) {
             setCart((prev) => {
-                const existing = prev.find((item) => item.id === product.id);
+                const existing = prev.find((item) => sameLine(item, line));
                 if (existing) {
                     return prev.map((item) =>
-                        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                        sameLine(item, line) ? { ...item, quantity: item.quantity + 1 } : item
                     );
                 }
-                return [...prev, { ...product, quantity: 1 }];
+                return [...prev, { ...line, quantity: 1 }];
             });
             showToast(`Đã thêm "${product.name}" vào giỏ hàng`);
             return;
         }
 
         try {
-            await addCartItem(product.id, 1, token);
+            await addCartItem(line.id, line.variant_id, 1, token);
             await fetchCart(token);
             showToast(`Đã thêm "${product.name}" vào giỏ hàng`);
         } catch (err) {
@@ -130,56 +147,57 @@ export function CartProvider({ children }) {
         }
     }
 
-    async function increaseQuantity(product) {
-        const existing = cart.find((item) => item.id === product.id);
-        if (!existing) return addToCart(product);
+    // increase/decrease/remove nhận 1 dòng giỏ hàng (item trong cart)
+    async function increaseQuantity(line) {
+        const existing = cart.find((item) => sameLine(item, line));
+        if (!existing) return;
 
         if (!token) {
             setCart((prev) =>
-                prev.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
+                prev.map((item) => (sameLine(item, line) ? { ...item, quantity: item.quantity + 1 } : item))
             );
             return;
         }
 
         try {
-            await updateCartItem(product.id, existing.quantity + 1, token);
+            await updateCartItem(line.id, existing.variant_id, existing.quantity + 1, token);
             await fetchCart(token);
         } catch (err) {
             console.error(err);
         }
     }
 
-    async function decreaseQuantity(product) {
-        const existing = cart.find((item) => item.id === product.id);
+    async function decreaseQuantity(line) {
+        const existing = cart.find((item) => sameLine(item, line));
         if (!existing) return;
 
         if (existing.quantity <= 1) {
-            return removeFromCart(product);
+            return removeFromCart(line);
         }
 
         if (!token) {
             setCart((prev) =>
-                prev.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity - 1 } : item))
+                prev.map((item) => (sameLine(item, line) ? { ...item, quantity: item.quantity - 1 } : item))
             );
             return;
         }
 
         try {
-            await updateCartItem(product.id, existing.quantity - 1, token);
+            await updateCartItem(line.id, existing.variant_id, existing.quantity - 1, token);
             await fetchCart(token);
         } catch (err) {
             console.error(err);
         }
     }
 
-    async function removeFromCart(product) {
+    async function removeFromCart(line) {
         if (!token) {
-            setCart((prev) => prev.filter((item) => item.id !== product.id));
+            setCart((prev) => prev.filter((item) => !sameLine(item, line)));
             return;
         }
 
         try {
-            await removeCartItem(product.id, token);
+            await removeCartItem(line.id, line.variant_id ?? null, token);
             await fetchCart(token);
         } catch (err) {
             console.error(err);

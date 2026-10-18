@@ -25,3 +25,13 @@ export const toggleProductStatus = (id, is_active, token) =>
         body: { is_active },
         token,
     });
+
+// Phiên bản sản phẩm: data = { name, price, stock }
+export const createVariant = (productId, data, token) =>
+    authFetch(`/api/admin/products/${productId}/variants`, { method: "POST", body: data, token });
+
+export const updateVariant = (productId, variantId, data, token) =>
+    authFetch(`/api/admin/products/${productId}/variants/${variantId}`, { method: "PUT", body: data, token });
+
+export const deleteVariant = (productId, variantId, token) =>
+    authFetch(`/api/admin/products/${productId}/variants/${variantId}`, { method: "DELETE", token });

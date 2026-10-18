@@ -15,9 +15,18 @@ const structuredModel = model.withStructuredOutput(chatResponseSchema);
 router.post('/', async (req, res) => {
     try {
         const { message, history } = req.body;
-        const result = await pool.query('SELECT * FROM products');
+        const result = await pool.query(
+            `SELECT p.*,
+                    (SELECT json_agg(json_build_object('name', v.name, 'price', v.price) ORDER BY v.sort_order, v.id)
+                     FROM product_variants v WHERE v.product_id = p.id) AS variants
+             FROM products p`
+        );
         const productList = result.rows
-            .map(p => `- id ${p.id}: ${p.name} - ${p.price}đ. ${p.description}`)
+            .map(p => {
+                if (!p.variants) return `- id ${p.id}: ${p.name} - ${p.price}đ. ${p.description}`;
+                const opts = p.variants.map(v => `${v.name}: ${v.price}đ`).join('; ');
+                return `- id ${p.id}: ${p.name} - các phiên bản (${opts}). ${p.description}`;
+            })
             .join('\n');
 
         const systemPrompt = buildSystemPrompt(productList);
@@ -37,7 +46,12 @@ router.post('/', async (req, res) => {
         const products = (response.productIds || [])
             .map((id) => result.rows.find((p) => p.id === id))
             .filter(Boolean)
-            .map(({ id, name, price, image }) => ({ id, name, price, image }));
+            .map(({ id, name, price, image, variants }) => ({
+                id,
+                name,
+                price: variants ? Math.min(...variants.map(v => Number(v.price))) : price,
+                image,
+            }));
 
         res.json({ ...response, products });
     } catch (err) {

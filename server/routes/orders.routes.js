@@ -40,7 +40,7 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
 
         if (req.user) {
             const cartRes = await client.query(
-                "SELECT product_id, quantity FROM cart_items WHERE user_id = $1",
+                "SELECT product_id, variant_id, quantity FROM cart_items WHERE user_id = $1",
                 [req.user.id]
             );
             items = cartRes.rows;
@@ -52,7 +52,7 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
             if (!Array.isArray(cart) || cart.length === 0) {
                 return res.status(400).json({ message: "Thiếu cart cho khách vãng lai" });
             }
-            items = cart.map((i) => ({ product_id: i.id, quantity: i.quantity }));
+            items = cart.map((i) => ({ product_id: i.id, variant_id: i.variant_id ?? null, quantity: i.quantity }));
         }
 
         if (items.length > 50) {
@@ -77,17 +77,44 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
                 throw { status: 404, message: `Sản phẩm id ${item.product_id} không tồn tại` };
             }
             const product = pRes.rows[0];
-            if (product.stock < item.quantity) {
+
+            // Sản phẩm có phiên bản thì giá/tồn kho lấy theo phiên bản (khoá luôn dòng phiên bản)
+            const vCountRes = await client.query(
+                "SELECT COUNT(*)::int AS n FROM product_variants WHERE product_id = $1",
+                [product.id]
+            );
+            let variant = null;
+            if (vCountRes.rows[0].n > 0) {
+                if (!Number.isInteger(item.variant_id)) {
+                    throw { status: 400, message: `Vui lòng chọn phiên bản cho sản phẩm "${product.name}"` };
+                }
+                const vRes = await client.query(
+                    "SELECT id, name, price, stock FROM product_variants WHERE id = $1 AND product_id = $2 FOR UPDATE",
+                    [item.variant_id, product.id]
+                );
+                if (vRes.rows.length === 0) {
+                    throw { status: 404, message: `Phiên bản của sản phẩm "${product.name}" không tồn tại` };
+                }
+                variant = vRes.rows[0];
+            } else if (item.variant_id !== null && item.variant_id !== undefined) {
+                throw { status: 400, message: `Sản phẩm "${product.name}" không có phiên bản` };
+            }
+
+            const unit = variant || product;
+            const label = variant ? `${product.name} (${variant.name})` : product.name;
+            if (unit.stock < item.quantity) {
                 throw {
                     status: 400,
-                    message: `Sản phẩm "${product.name}" không đủ tồn kho (còn ${product.stock}, cần ${item.quantity})`,
+                    message: `Sản phẩm "${label}" không đủ tồn kho (còn ${unit.stock}, cần ${item.quantity})`,
                 };
             }
-            total += Number(product.price) * item.quantity;
+            total += Number(unit.price) * item.quantity;
             orderItemsData.push({
                 product_id: product.id,
+                variant_id: variant ? variant.id : null,
+                variant_name: variant ? variant.name : null,
                 name: product.name,
-                price: product.price,
+                price: unit.price,
                 quantity: item.quantity,
             });
         }
@@ -101,14 +128,21 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
 
         for (const oi of orderItemsData) {
             await client.query(
-                `INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase, product_name)
-         VALUES ($1, $2, $3, $4, $5)`,
-                [orderId, oi.product_id, oi.quantity, oi.price, oi.name]
+                `INSERT INTO order_items (order_id, product_id, variant_id, variant_name, quantity, price_at_purchase, product_name)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [orderId, oi.product_id, oi.variant_id, oi.variant_name, oi.quantity, oi.price, oi.name]
             );
-            await client.query("UPDATE products SET stock = stock - $1 WHERE id = $2", [
-                oi.quantity,
-                oi.product_id,
-            ]);
+            if (oi.variant_id) {
+                await client.query("UPDATE product_variants SET stock = stock - $1 WHERE id = $2", [
+                    oi.quantity,
+                    oi.variant_id,
+                ]);
+            } else {
+                await client.query("UPDATE products SET stock = stock - $1 WHERE id = $2", [
+                    oi.quantity,
+                    oi.product_id,
+                ]);
+            }
         }
 
         if (req.user) {
@@ -146,10 +180,11 @@ router.post("/track", trackLimiter, async (req, res) => {
         }
 
         const itemsResult = await pool.query(
-            `SELECT oi.id, oi.product_id, oi.product_name, oi.quantity, oi.price_at_purchase,
-                    p.image, p.is_active AS product_is_active
+            `SELECT oi.id, oi.product_id, oi.product_name, oi.variant_name, oi.quantity, oi.price_at_purchase,
+                    COALESCE(v.image, p.image) AS image, p.is_active AS product_is_active
              FROM order_items oi
              LEFT JOIN products p ON oi.product_id = p.id
+             LEFT JOIN product_variants v ON v.id = oi.variant_id
              WHERE oi.order_id = $1
              ORDER BY oi.id`,
             [id]
@@ -175,9 +210,10 @@ router.get("/my", verifyToken, async (req, res) => {
                                 'id', oi.id,
                                 'product_id', oi.product_id,
                                 'product_name', oi.product_name,
+                                'variant_name', oi.variant_name,
                                 'quantity', oi.quantity,
                                 'price_at_purchase', oi.price_at_purchase,
-                                'image', p.image
+                                'image', COALESCE(v.image, p.image)
                             ) ORDER BY oi.id
                         ) FILTER (WHERE oi.id IS NOT NULL),
                         '[]'
@@ -185,6 +221,7 @@ router.get("/my", verifyToken, async (req, res) => {
              FROM orders o
              LEFT JOIN order_items oi ON oi.order_id = o.id
              LEFT JOIN products p ON p.id = oi.product_id
+             LEFT JOIN product_variants v ON v.id = oi.variant_id
              WHERE o.user_id = $1
              GROUP BY o.id
              ORDER BY o.created_at DESC`,
@@ -210,10 +247,11 @@ router.get("/my/:id", verifyToken, async (req, res) => {
         }
 
         const itemsResult = await pool.query(
-            `SELECT oi.id, oi.product_id, oi.product_name, oi.quantity, oi.price_at_purchase,
-                    p.image, p.is_active AS product_is_active
+            `SELECT oi.id, oi.product_id, oi.product_name, oi.variant_name, oi.quantity, oi.price_at_purchase,
+                    COALESCE(v.image, p.image) AS image, p.is_active AS product_is_active
              FROM order_items oi
              LEFT JOIN products p ON oi.product_id = p.id
+             LEFT JOIN product_variants v ON v.id = oi.variant_id
              WHERE oi.order_id = $1
              ORDER BY oi.id`,
             [id]

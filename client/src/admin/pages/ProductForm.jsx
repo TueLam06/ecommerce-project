@@ -3,12 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { authFetch } from "../../api/http";
 import { createProduct, updateProduct } from "../api/adminProducts";
+import VariantEditor from "../components/VariantEditor";
 
 const emptyForm = {
     name: "",
     price: "",
     stock: "",
     description: "",
+    short_description: "",
     image_url: "",
     category_id: "",
 };
@@ -28,6 +30,7 @@ export default function ProductForm() {
     const [loading, setLoading] = useState(isEdit);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [variants, setVariants] = useState([]);
 
     // Lấy danh sách categories cho dropdown
     useEffect(() => {
@@ -45,10 +48,12 @@ export default function ProductForm() {
                     price: data.price ?? "",
                     stock: data.stock ?? "",
                     description: data.description ?? "",
+                    short_description: data.short_description ?? "",
                     // Cột DB tên là "image", không phải "image_url"
                     image_url: data.image ?? "",
                     category_id: data.category_id ?? "",
                 });
+                setVariants(data.variants ?? []);
             })
             .catch((err) => setError(err.message))
             .finally(() => setLoading(false));
@@ -68,6 +73,7 @@ export default function ProductForm() {
             name: form.name,
             price: Number(form.price),
             description: form.description || null,
+            short_description: form.short_description.trim() || null,
             image_url: form.image_url || null,
             category_id: form.category_id || null,
         };
@@ -156,13 +162,28 @@ export default function ProductForm() {
                 )}
 
                 <div>
-                    <label className={labelClass}>Mô tả</label>
+                    <label className={labelClass}>Mô tả ngắn (hiện trên thẻ sản phẩm)</label>
+                    <input
+                        className={inputClass}
+                        name="short_description"
+                        value={form.short_description}
+                        onChange={handleChange}
+                        maxLength={200}
+                        placeholder="Core i5-1335U · 8GB · 512GB SSD · 15.6 inch FHD"
+                    />
+                </div>
+
+                <div>
+                    <label className={labelClass}>
+                        Thông số chi tiết (mỗi dòng một thông số, dạng &quot;Tên: giá trị&quot;)
+                    </label>
                     <textarea
                         className={inputClass}
                         name="description"
                         value={form.description}
                         onChange={handleChange}
-                        rows={3}
+                        rows={8}
+                        placeholder={"CPU: Intel Core i5-1335U\nRAM: 8GB\nỔ cứng: SSD 512GB NVMe"}
                     />
                 </div>
 
@@ -202,6 +223,8 @@ export default function ProductForm() {
                     {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Thêm sản phẩm"}
                 </button>
             </form>
+
+            {isEdit && <VariantEditor productId={id} initialVariants={variants} token={token} />}
         </div>
     );
 }
