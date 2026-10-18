@@ -72,6 +72,8 @@ pool.query(`
     .then(() => {
         app.listen(PORT, () => {
             console.log(`Server đang chạy tại http://localhost:${PORT}`);
+            // In host DB để biết đang chạy trên branch dev hay production
+            console.log(`Database: ${new URL(process.env.DATABASE_URL).hostname}`);
         });
     })
     .catch((err) => {

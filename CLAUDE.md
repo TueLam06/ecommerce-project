@@ -18,7 +18,7 @@ cd client && npm install && npm run dev   # http://localhost:5173
 
 - `npm start` ở server **không** tự nạp lại code. Sửa code mà server vẫn chạy bản cũ thì restart, hoặc kiểm tra xem có process cũ đang giữ cổng 5000 không.
 - `server/.env` không commit, copy từ `server/.env.example`. Biến môi trường: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `GEMINI_API_KEY`, `BREVO_API_KEY`, `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`, `CLIENT_URL`, `CLOUDINARY_*`.
-- **`server/.env` local đang trỏ vào database Neon dùng chung với production**: thao tác ghi/xoá dữ liệu khi test là đụng vào dữ liệu thật.
+- `server/.env` local trỏ vào **branch `dev` của Neon** (bản sao tách khỏi production, muốn lấy lại dữ liệu mới thì *Reset from parent* trên console). Server in host DB lúc khởi động, host production bắt đầu bằng `ep-square-recipe-`. Render dùng `DATABASE_URL` riêng trỏ vào production.
 - Client: `.env.development` (localhost:5000) và `.env.production` (URL Render) đều được commit, chỉ chứa `VITE_API_URL`. Không bao giờ để secret trong biến `VITE_*` vì chúng bị đóng gói vào JS gửi xuống trình duyệt.
 - Không có test tự động. Kiểm tra bằng `npm run lint` (hiện 0 lỗi, giữ nguyên như vậy) và `npm run build` ở client.
 
