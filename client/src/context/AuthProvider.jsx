@@ -1,19 +1,16 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { loginRequest, registerRequest, getMeRequest, verifyEmailRequest } from '../api/auth';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(() => localStorage.getItem('token'));
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    // Chỉ cần chờ khi có token lưu sẵn (phải gọi /me lấy lại user)
+    const [loading, setLoading] = useState(() => Boolean(localStorage.getItem('token')));
 
     // Khi app khởi động, nếu đã có token lưu sẵn thì lấy lại thông tin user
     useEffect(() => {
-        if (!token) {
-            setLoading(false);
-            return;
-        }
+        if (!token) return;
         getMeRequest(token)
             .then((data) => setUser(data.user))
             .catch(() => {
@@ -58,10 +55,4 @@ export function AuthProvider({ children }) {
             {children}
         </AuthContext.Provider>
     );
-}
-
-export function useAuth() {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth phải được gọi bên trong <AuthProvider>');
-    return ctx;
 }

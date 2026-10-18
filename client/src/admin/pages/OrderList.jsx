@@ -31,23 +31,25 @@ export default function OrderList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const loadOrders = async () => {
-        setLoading(true);
-        setError("");
-        try {
-            const data = await getAllOrders(token, filterStatus || undefined);
-            setOrders(data);
-        } catch (err) {
-            setError(err.message || "Lỗi tải danh sách đơn hàng");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        loadOrders();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterStatus]);
+        let ignore = false; // đổi filter liên tục thì bỏ kết quả của request cũ
+        getAllOrders(token, filterStatus || undefined)
+            .then((data) => {
+                if (ignore) return;
+                setOrders(data);
+                setError("");
+            })
+            .catch((err) => !ignore && setError(err.message || "Lỗi tải danh sách đơn hàng"))
+            .finally(() => !ignore && setLoading(false));
+        return () => {
+            ignore = true;
+        };
+    }, [token, filterStatus]);
+
+    const handleFilterChange = (e) => {
+        setLoading(true);
+        setFilterStatus(e.target.value);
+    };
 
     const handleStatusChange = async (id, newStatus) => {
         if (
@@ -96,7 +98,7 @@ export default function OrderList() {
 
                 <select
                     value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
+                    onChange={handleFilterChange}
                     className="rounded-md border border-[#D9D6CC] bg-white px-3 py-2 text-sm text-[#1A1A18]"
                 >
                     <option value="">Tất cả trạng thái</option>

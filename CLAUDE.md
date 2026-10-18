@@ -20,7 +20,7 @@ cd client && npm install && npm run dev   # http://localhost:5173
 - `server/.env` không commit, copy từ `server/.env.example`. Biến môi trường: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `GEMINI_API_KEY`, `BREVO_API_KEY`, `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`, `CLIENT_URL`, `CLOUDINARY_*`.
 - **`server/.env` local đang trỏ vào database Neon dùng chung với production**: thao tác ghi/xoá dữ liệu khi test là đụng vào dữ liệu thật.
 - Client: `.env.development` (localhost:5000) và `.env.production` (URL Render) đều được commit, chỉ chứa `VITE_API_URL`. Không bao giờ để secret trong biến `VITE_*` vì chúng bị đóng gói vào JS gửi xuống trình duyệt.
-- Không có test tự động. Kiểm tra bằng `npm run lint` và `npm run build` ở client (hiện có sẵn 8 lỗi/cảnh báo ESLint cũ ở admin, AuthContext, CartProvider).
+- Không có test tự động. Kiểm tra bằng `npm run lint` (hiện 0 lỗi, giữ nguyên như vậy) và `npm run build` ở client.
 
 ## Cấu trúc
 
@@ -38,7 +38,8 @@ cd client && npm install && npm run dev   # http://localhost:5173
 ### Client
 - `src/api/http.js`: **nơi duy nhất** đọc `VITE_API_URL` và gọi `fetch` (hàm `authFetch(path, { method, body, token })`, ném `Error` có `message` và `code` từ server). Các module `api/*.js` và `admin/api/*.js` bọc từng endpoint. Trang và context không gọi `fetch` trực tiếp.
 - `pages/*Page.jsx`: mỗi route một trang (hậu tố `Page`). `admin/`: trang quản trị (layout, pages, api riêng).
-- `context/`: `AuthContext` (token lưu `localStorage`), `CartProvider` (khách vãng lai lưu giỏ trong `localStorage`, đã đăng nhập thì đồng bộ với DB và merge lúc vừa đăng nhập).
+- `context/`: mỗi context tách 2 file, `XxxContext.js` (createContext + hook `useXxx`) và `XxxProvider.jsx` (component), để Vite fast refresh hoạt động. `AuthProvider` lưu token trong `localStorage`; `CartProvider` lưu giỏ của khách vãng lai trong `localStorage`, đã đăng nhập thì đồng bộ với DB và merge lúc vừa đăng nhập.
+- Không gọi setState đồng bộ trong `useEffect` (rule `react-hooks/set-state-in-effect`): set state trong callback sau khi fetch, trong handler sự kiện, hoặc điều chỉnh state ngay lúc render khi prop đổi.
 - `routes/PrivateRoute.jsx`, `routes/AdminRoute.jsx`: chặn route cần đăng nhập/admin.
 - Màu chủ đạo: xanh `#2F5233`, nền `#FAFAF8`, font tiêu đề Fraunces.
 

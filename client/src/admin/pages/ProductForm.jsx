@@ -34,7 +34,7 @@ export default function ProductForm() {
         authFetch("/api/admin/products/categories", { token })
             .then(setCategories)
             .catch((err) => setError(err.message));
-    }, []);
+    }, [token]);
 
     useEffect(() => {
         if (!isEdit) return;
@@ -52,7 +52,7 @@ export default function ProductForm() {
             })
             .catch((err) => setError(err.message))
             .finally(() => setLoading(false));
-    }, [id]);
+    }, [id, isEdit, token]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

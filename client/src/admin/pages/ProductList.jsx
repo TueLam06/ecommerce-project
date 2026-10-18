@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { useAuth } from "../../context/AuthContext";
 import { getAllProducts, toggleProductStatus, adjustStock } from "../api/adminProducts";
 
 export default function ProductList() {
@@ -9,21 +9,12 @@ export default function ProductList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const fetchProducts = async () => {
-        setLoading(true);
-        try {
-            const data = await getAllProducts(token);
-            setProducts(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchProducts();
-    }, []);
+        getAllProducts(token)
+            .then(setProducts)
+            .catch((err) => setError(err.message))
+            .finally(() => setLoading(false));
+    }, [token]);
 
     const handleToggleStatus = async (product) => {
         try {

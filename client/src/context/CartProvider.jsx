@@ -65,29 +65,34 @@ export function CartProvider({ children }) {
         localStorage.removeItem("cart");
     }, []);
 
-    // Theo dõi lúc login/logout để merge + đồng bộ
+    // Token vừa đổi: cập nhật state ngay trong lúc render (cách React khuyên thay cho setState trong effect)
+    const [prevToken, setPrevToken] = useState(token);
+    if (token !== prevToken) {
+        setPrevToken(token);
+        if (!token) {
+            setCart([]); // logout: không giữ cart của user cũ, khách vãng lai bắt đầu giỏ trống
+        } else if (!prevToken) {
+            setLoading(true); // vừa login: chờ merge + tải cart từ DB
+        }
+    }
+
+    // Đồng bộ cart với DB khi vừa login (merge cart local lên) hoặc F5 lúc đã đăng nhập sẵn
     const prevTokenRef = useRef(token);
     useEffect(() => {
         const justLoggedIn = !prevTokenRef.current && token;
-        const justLoggedOut = prevTokenRef.current && !token;
         prevTokenRef.current = token;
+        if (!token) return;
 
-        if (justLoggedIn) {
-            (async () => {
-                setLoading(true);
+        (async () => {
+            if (justLoggedIn) {
                 const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
                 if (localCart.length > 0) {
                     await mergeLocalCartToServer(localCart, token);
                 }
-                await fetchCart(token);
-                setLoading(false);
-            })();
-        } else if (justLoggedOut) {
-            setCart([]); // logout: không giữ cart của user cũ, khách vãng lai bắt đầu giỏ trống
-        } else if (token) {
-            // F5 lúc đã đăng nhập sẵn (token có ngay từ đầu, không qua "vừa login")
-            fetchCart(token);
-        }
+            }
+            await fetchCart(token);
+            if (justLoggedIn) setLoading(false);
+        })();
     }, [token, fetchCart, mergeLocalCartToServer]);
 
     const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
