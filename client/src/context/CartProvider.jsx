@@ -12,18 +12,27 @@ export function CartProvider({ children }) {
     });
     const [loading, setLoading] = useState(false);
 
-    const [toast, setToast] = useState(null);
-    const toastTimerRef = useRef(null);
+    // Nhiều thông báo xếp chồng, mỗi cái tự tắt theo timer riêng
+    const [toasts, setToasts] = useState([]);
+    const toastTimersRef = useRef(new Map());
+    const toastIdRef = useRef(0);
 
     function showToast(message) {
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        setToast(message);
-        toastTimerRef.current = setTimeout(() => setToast(null), 2000);
+        const id = ++toastIdRef.current;
+        // Giữ tối đa 5 thông báo, cái cũ nhất bị đẩy ra
+        setToasts((prev) => [...prev, { id, message }].slice(-5));
+        const timer = setTimeout(() => {
+            toastTimersRef.current.delete(id);
+            setToasts((prev) => prev.filter((t) => t.id !== id));
+        }, 2500);
+        toastTimersRef.current.set(id, timer);
     }
 
     useEffect(() => {
+        const timers = toastTimersRef.current;
         return () => {
-            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+            timers.forEach((timer) => clearTimeout(timer));
+            timers.clear();
         };
     }, []);
 
@@ -237,13 +246,18 @@ export function CartProvider({ children }) {
         <CartContext.Provider value={value}>
             {children}
             <div
-                className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
-                    toast ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
-                }`}
+                role="status"
+                aria-live="polite"
+                className="fixed top-4 right-4 z-50 flex flex-col items-end gap-2 pointer-events-none"
             >
-                <div className="rounded-md bg-[#2F5233] text-[#F5F3EE] px-5 py-3 shadow-lg text-sm font-medium">
-                    {toast}
-                </div>
+                {toasts.map((t) => (
+                    <div
+                        key={t.id}
+                        className="toast-in max-w-xs rounded-md bg-[#2F5233] text-[#F5F3EE] px-5 py-3 shadow-lg text-sm font-medium"
+                    >
+                        {t.message}
+                    </div>
+                ))}
             </div>
         </CartContext.Provider>
     );
