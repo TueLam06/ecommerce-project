@@ -52,6 +52,13 @@ const resendVerificationLimiter = createLimiter({
     message: 'Bạn gửi lại email quá nhiều lần, vui lòng thử lại sau 15 phút',
 });
 
+// Quên mật khẩu: 3 lần / 15 phút / IP (mỗi lần tốn 1 mail, chặn spam hộp thư người khác)
+const forgotPasswordLimiter = createLimiter({
+    windowMs: 15 * 60_000,
+    limit: 3,
+    message: 'Bạn yêu cầu đặt lại mật khẩu quá nhiều lần, vui lòng thử lại sau 15 phút',
+});
+
 // Đặt hàng: 5 đơn / 10 phút, theo user nếu đã đăng nhập, theo IP nếu là khách
 const orderLimiter = createLimiter({
     windowMs: 10 * 60_000,
@@ -80,6 +87,7 @@ module.exports = {
     loginIpLimiter,
     registerLimiter,
     resendVerificationLimiter,
+    forgotPasswordLimiter,
     orderLimiter,
     trackLimiter,
     chatLimiter,

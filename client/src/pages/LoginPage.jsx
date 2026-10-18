@@ -89,9 +89,14 @@ export default function LoginPage() {
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm text-[#3A3A36] mb-1.5">
-                                Mật khẩu
-                            </label>
+                            <div className="flex items-baseline justify-between mb-1.5">
+                                <label htmlFor="password" className="block text-sm text-[#3A3A36]">
+                                    Mật khẩu
+                                </label>
+                                <Link to="/forgot-password" className="text-sm text-[#2F5233] underline underline-offset-2">
+                                    Quên mật khẩu?
+                                </Link>
+                            </div>
                             <input
                                 id="password"
                                 type="password"

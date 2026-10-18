@@ -15,6 +15,8 @@ import OrderHistoryPage from "./pages/OrderHistoryPage";
 import MyOrderDetailPage from "./pages/MyOrderDetailPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 import PrivateRoute from "./routes/PrivateRoute";
 import AdminRoute from "./routes/AdminRoute";
@@ -48,6 +50,8 @@ function App() {
                                             <Route path="/login" element={<LoginPage h/>} />
                                             <Route path="/register" element={<RegisterPage />} />
                                             <Route path="/verify-email" element={<VerifyEmailPage />} />
+                                            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                                            <Route path="/reset-password" element={<ResetPasswordPage />} />
                                             <Route
                                                 path="/orders"
                                                 element={<PrivateRoute><OrderHistoryPage /></PrivateRoute>}

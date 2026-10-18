@@ -4,6 +4,7 @@ const pool = require("../config/db");
 const { verifyToken, optionalAuth } = require("../middleware/auth.middleware");
 const { restoreStock } = require("../utils/orderStock");
 const { trackLimiter, orderLimiter } = require("../middleware/rateLimit.middleware");
+const { sendOrderConfirmationEmail } = require("../utils/mailer");
 
 // Chuẩn hoá SĐT để so sánh: bỏ ký tự không phải số, +84/84 -> 0
 function normalizePhone(phone) {
@@ -20,9 +21,13 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
     const address = String(req.body.address || "").trim();
     // Chuẩn hoá SĐT: bỏ khoảng trắng/dấu chấm/gạch, +84 -> 0
     const phone = String(req.body.phone || "").replace(/[\s.-]/g, "").replace(/^\+84/, "0");
+    const email = String(req.body.email || "").trim().toLowerCase();
 
-    if (!customer_name || !phone || !address) {
-        return res.status(400).json({ message: "Thiếu customer_name/phone/address" });
+    if (!customer_name || !phone || !address || !email) {
+        return res.status(400).json({ message: "Thiếu customer_name/phone/address/email" });
+    }
+    if (email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Email không hợp lệ" });
     }
     if (customer_name.length < 2 || customer_name.length > 50) {
         return res.status(400).json({ message: "Họ tên dài từ 2 đến 50 ký tự" });
@@ -120,9 +125,9 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
         }
 
         const orderRes = await client.query(
-            `INSERT INTO orders (customer_name, phone, address, total, user_id)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-            [customer_name, phone, address, total, req.user ? req.user.id : null]
+            `INSERT INTO orders (customer_name, phone, address, total, user_id, email)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+            [customer_name, phone, address, total, req.user ? req.user.id : null, email]
         );
         const orderId = orderRes.rows[0].id;
 
@@ -150,6 +155,13 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
         }
 
         await client.query("COMMIT");
+
+        // Gửi mail sau khi commit và không chờ: mail lỗi thì đơn vẫn thành công
+        sendOrderConfirmationEmail(
+            { id: orderId, customer_name, phone, address, total, email, user_id: req.user ? req.user.id : null },
+            orderItemsData
+        ).catch((mailErr) => console.error("Send order confirmation email error:", mailErr));
+
         return res.status(201).json({ message: "Đặt hàng thành công", orderId, total });
     } catch (err) {
         await client.query("ROLLBACK");

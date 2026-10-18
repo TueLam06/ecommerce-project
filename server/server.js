@@ -68,6 +68,9 @@ pool.query(`
 
     -- Ảnh riêng của phiên bản (vd mỗi màu một ảnh), NULL thì dùng ảnh sản phẩm
     ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS image TEXT;
+
+    -- Email nhận thông báo đơn hàng, đơn cũ để NULL
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS email VARCHAR(255);
 `)
     .then(() => {
         app.listen(PORT, () => {

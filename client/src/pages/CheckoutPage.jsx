@@ -26,6 +26,7 @@ function normalizePhone(phone) {
 
 const PHONE_REGEX = /^0(3|5|7|8|9)\d{8}$/;
 const NAME_REGEX = /^[\p{L}\s'.]+$/u;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Trả về { tên field: thông báo lỗi } — rỗng nghĩa là hợp lệ
 function validate(data) {
@@ -39,6 +40,10 @@ function validate(data) {
     if (!phone) errors.phone = "Vui lòng nhập số điện thoại";
     else if (!PHONE_REGEX.test(phone))
         errors.phone = "Số điện thoại không hợp lệ";
+
+    const email = data.email.trim();
+    if (!email) errors.email = "Vui lòng nhập email để nhận xác nhận đơn hàng";
+    else if (email.length > 255 || !EMAIL_REGEX.test(email)) errors.email = "Email không hợp lệ";
 
     const city = CITIES.find((c) => c.name === data.city);
     if (!city) errors.city = "Vui lòng chọn thành phố";
@@ -69,8 +74,14 @@ function FieldError({ id, message }) {
 
 function CheckoutPage() {
     const { cart, total, clearCart } = useCart();
-    const { token } = useAuth();
-    const [formData, setFormData] = useState({ name: "", phone: "", city: "", ward: "", street: "" });
+    const { token, user } = useAuth();
+    const [formData, setFormData] = useState({ name: "", phone: "", email: user?.email || "", city: "", ward: "", street: "" });
+    // Đã đăng nhập thì điền sẵn email tài khoản (user có thể tải xong sau lần render đầu)
+    const [prefilledEmail, setPrefilledEmail] = useState(user?.email);
+    if (user?.email && user.email !== prefilledEmail) {
+        setPrefilledEmail(user.email);
+        if (!formData.email) setFormData((prev) => ({ ...prev, email: user.email }));
+    }
     // Chỉ báo lỗi ô người dùng đã rời khỏi, hoặc tất cả sau khi bấm đặt hàng
     const [touched, setTouched] = useState({});
     const [submitting, setSubmitting] = useState(false);
@@ -109,7 +120,7 @@ function CheckoutPage() {
         e.preventDefault();
         setError(null);
         if (Object.keys(fieldErrors).length > 0) {
-            setTouched({ name: true, phone: true, city: true, ward: true, street: true });
+            setTouched({ name: true, phone: true, email: true, city: true, ward: true, street: true });
             document.getElementById(Object.keys(fieldErrors)[0])?.focus();
             return;
         }
@@ -119,6 +130,7 @@ function CheckoutPage() {
         const body = {
             customer_name: formData.name.trim(),
             phone,
+            email: formData.email.trim(),
             address: `${formData.street.trim()}, ${formData.ward}, ${formData.city}`,
             ...(!token && {
                 cart: cart.map((item) => ({ id: item.id, variant_id: item.variant_id ?? null, quantity: item.quantity })),
@@ -128,7 +140,7 @@ function CheckoutPage() {
         try {
             const data = await createOrder(body, token);
 
-            setOrderResult({ orderId: data.orderId, total: data.total, phone });
+            setOrderResult({ orderId: data.orderId, total: data.total, phone, email: body.email });
             if (!token) saveLastGuestOrder(data.orderId, phone);
             clearCart();
         } catch (err) {
@@ -156,6 +168,8 @@ function CheckoutPage() {
                         Tổng thanh toán: <span className="text-[#1F2420] font-medium">{formatVND(orderResult.total)}</span>
                     </p>
                     <p style={inter} className="text-[#6B6F63] text-sm mb-8">
+                        Thông tin đơn hàng đã được gửi tới{" "}
+                        <span className="text-[#1F2420] font-medium">{orderResult.email}</span>.
                         Chúng tôi sẽ liên hệ qua số điện thoại bạn đã cung cấp để xác nhận đơn.
                         {!token && (
                             <>
@@ -290,6 +304,28 @@ function CheckoutPage() {
                             className={inputClass(errorOf("phone"))}
                         />
                         <FieldError id="phone-error" message={errorOf("phone")} />
+                    </div>
+
+                    <div>
+                        <label htmlFor="email" className="block text-sm text-[#6B6F63] mb-1.5">
+                            Email
+                            <span className="text-[#B0AC9C]"> (nhận xác nhận đơn hàng)</span>
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            name="email"
+                            autoComplete="email"
+                            inputMode="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            placeholder="ban@email.com"
+                            aria-invalid={Boolean(errorOf("email"))}
+                            aria-describedby="email-error"
+                            className={inputClass(errorOf("email"))}
+                        />
+                        <FieldError id="email-error" message={errorOf("email")} />
                     </div>
 
                     <fieldset className="space-y-4">

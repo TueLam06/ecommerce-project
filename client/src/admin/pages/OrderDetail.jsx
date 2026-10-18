@@ -115,6 +115,12 @@ export default function OrderDetail() {
                         <p className="text-[#6B6B65] mb-1">SĐT</p>
                         <p className="text-[#1A1A18] font-medium">{order.phone}</p>
                     </div>
+                    {order.email && (
+                        <div className="sm:col-span-2">
+                            <p className="text-[#6B6B65] mb-1">Email</p>
+                            <p className="text-[#1A1A18] font-medium break-all">{order.email}</p>
+                        </div>
+                    )}
                     <div className="sm:col-span-2">
                         <p className="text-[#6B6B65] mb-1">Địa chỉ</p>
                         <p className="text-[#1A1A18] font-medium">{order.address}</p>

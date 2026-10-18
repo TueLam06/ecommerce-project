@@ -42,10 +42,27 @@ function verifyEmailToken(token) {
     return jwt.verify(token, EMAIL_SECRET);
 }
 
+// Token đặt lại mật khẩu: secret riêng, hạn ngắn. Đổi mật khẩu xong thì dấu vân tay đổi nên link chỉ dùng được 1 lần
+const RESET_SECRET = `${JWT_SECRET}:reset-password`;
+
+function generateResetToken(user) {
+    return jwt.sign(
+        { id: user.id, email: user.email, pwf: passwordFingerprint(user.password) },
+        RESET_SECRET,
+        { expiresIn: '30m' }
+    );
+}
+
+function verifyResetToken(token) {
+    return jwt.verify(token, RESET_SECRET);
+}
+
 module.exports = {
     generateToken,
     verifyTokenString,
     generateEmailToken,
     verifyEmailToken,
+    generateResetToken,
+    verifyResetToken,
     passwordFingerprint,
 };

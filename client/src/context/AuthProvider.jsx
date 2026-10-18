@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { loginRequest, registerRequest, getMeRequest, verifyEmailRequest } from '../api/auth';
+import { loginRequest, registerRequest, getMeRequest, verifyEmailRequest, resetPasswordRequest } from '../api/auth';
 import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }) {
@@ -44,6 +44,15 @@ export function AuthProvider({ children }) {
         return data.user;
     }
 
+    // Đặt mật khẩu mới từ link trong email -> đổi xong thì đăng nhập luôn
+    async function resetPassword(resetToken, password) {
+        const data = await resetPasswordRequest({ token: resetToken, password });
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        return data.user;
+    }
+
     function logout() {
         localStorage.removeItem('token');
         setToken(null);
@@ -51,7 +60,7 @@ export function AuthProvider({ children }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, verifyEmail, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, verifyEmail, resetPassword, logout }}>
             {children}
         </AuthContext.Provider>
     );

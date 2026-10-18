@@ -7,15 +7,18 @@ const {
     generateToken,
     generateEmailToken,
     verifyEmailToken,
+    generateResetToken,
+    verifyResetToken,
     passwordFingerprint,
 } = require('../utils/token');
-const { sendVerificationEmail } = require('../utils/mailer');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/mailer');
 const { verifyToken } = require('../middleware/auth.middleware');
 const {
     loginLimiter,
     loginIpLimiter,
     registerLimiter,
     resendVerificationLimiter,
+    forgotPasswordLimiter,
 } = require('../middleware/rateLimit.middleware');
 
 const SALT_ROUNDS = 10;
@@ -176,6 +179,79 @@ router.post('/resend-verification', resendVerificationLimiter, async (req, res) 
     } catch (err) {
         console.error('Resend verification error:', err);
         res.status(500).json({ error: 'Không gửi được email, vui lòng thử lại sau' });
+    }
+});
+
+// POST /api/auth/forgot-password - body: { email }
+// Luôn trả cùng một câu để không lộ email nào đã đăng ký
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
+    const email = String(req.body.email || '').trim();
+    const message = 'Nếu email đã đăng ký, chúng tôi đã gửi link đặt lại mật khẩu. Vui lòng kiểm tra hộp thư';
+
+    if (!email) {
+        return res.status(400).json({ error: 'Thiếu email' });
+    }
+
+    try {
+        const result = await pool.query('SELECT id, name, email, password FROM users WHERE email = $1', [email]);
+        const user = result.rows[0];
+        // Không chờ gửi mail: thời gian phản hồi và lỗi gửi mail không được để lộ email có tồn tại hay không
+        if (user) {
+            sendPasswordResetEmail(user, generateResetToken(user))
+                .catch((mailErr) => console.error('Send reset email error:', mailErr));
+        }
+        res.json({ message });
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        res.status(500).json({ error: 'Không gửi được email, vui lòng thử lại sau' });
+    }
+});
+
+// POST /api/auth/reset-password - body: { token, password }. Đổi xong thì đăng nhập luôn
+router.post('/reset-password', async (req, res) => {
+    const password = String(req.body.password || '');
+    if (password.length < 6) {
+        return res.status(400).json({ error: 'Password phải có ít nhất 6 ký tự' });
+    }
+
+    let payload;
+    try {
+        payload = verifyResetToken(String(req.body.token || ''));
+    } catch (err) {
+        const expired = err.name === 'TokenExpiredError';
+        return res.status(400).json({
+            error: expired
+                ? 'Link đặt lại mật khẩu đã hết hạn, vui lòng yêu cầu link mới'
+                : 'Link đặt lại mật khẩu không hợp lệ',
+        });
+    }
+
+    try {
+        const found = await pool.query(
+            'SELECT id, password FROM users WHERE id = $1 AND email = $2',
+            [payload.id, payload.email]
+        );
+        const row = found.rows[0];
+        // Mật khẩu đã đổi (link đã dùng, hoặc có link mới hơn được dùng trước) thì link hết hiệu lực
+        if (!row || passwordFingerprint(row.password) !== payload.pwf) {
+            return res.status(400).json({
+                error: 'Link đặt lại mật khẩu đã được sử dụng hoặc không còn hiệu lực, vui lòng yêu cầu link mới',
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+        // Bấm được link trong mail tức là sở hữu email, nên coi như đã xác thực luôn
+        const updated = await pool.query(
+            `UPDATE users SET password = $1, email_verified = true WHERE id = $2
+       RETURNING id, name, email, role`,
+            [hashedPassword, row.id]
+        );
+
+        const user = updated.rows[0];
+        res.json({ user, token: generateToken(user) });
+    } catch (err) {
+        console.error('Reset password error:', err);
+        res.status(500).json({ error: 'Lỗi server khi đặt lại mật khẩu' });
     }
 });
 
