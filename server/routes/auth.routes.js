@@ -23,6 +23,24 @@ const {
 } = require('../middleware/rateLimit.middleware');
 
 const SALT_ROUNDS = 10;
+const DELIVERY_CITIES = ['Thành phố Hà Nội', 'Thành phố Hồ Chí Minh'];
+
+// Các cột trả về cho client (không có password). phone/city/ward/street dùng để tự điền form đặt hàng
+const USER_COLUMNS = 'id, name, email, role, created_at, phone, city, ward, street';
+
+function publicUser(row) {
+    return {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        role: row.role,
+        created_at: row.created_at,
+        phone: row.phone || '',
+        city: row.city || '',
+        ward: row.ward || '',
+        street: row.street || '',
+    };
+}
 
 router.post('/register', registerLimiter, async (req, res) => {
     const { name, email, password } = req.body;
@@ -111,7 +129,7 @@ router.post('/login', loginIpLimiter, loginLimiter, async (req, res) => {
         const token = generateToken(user);
 
         res.json({
-            user: { id: user.id, name: user.name, email: user.email, role: user.role },
+            user: publicUser(user),
             token,
         });
     } catch (err) {
@@ -137,7 +155,7 @@ router.post('/verify-email', async (req, res) => {
     try {
         // So cả email và mật khẩu: link cũ hết hiệu lực nếu đã đổi email hoặc đã đăng ký lại
         const found = await pool.query(
-            'SELECT id, name, email, password, role FROM users WHERE id = $1 AND email = $2',
+            `SELECT ${USER_COLUMNS}, password FROM users WHERE id = $1 AND email = $2`,
             [payload.id, payload.email]
         );
         const row = found.rows[0];
@@ -149,7 +167,7 @@ router.post('/verify-email', async (req, res) => {
 
         await pool.query('UPDATE users SET email_verified = true WHERE id = $1', [row.id]);
 
-        const user = { id: row.id, name: row.name, email: row.email, role: row.role };
+        const user = publicUser(row);
         res.json({ user, token: generateToken(user) });
     } catch (err) {
         console.error('Verify email error:', err);
@@ -244,11 +262,11 @@ router.post('/reset-password', async (req, res) => {
         // Bấm được link trong mail tức là sở hữu email, nên coi như đã xác thực luôn
         const updated = await pool.query(
             `UPDATE users SET password = $1, email_verified = true WHERE id = $2
-       RETURNING id, name, email, role`,
+       RETURNING ${USER_COLUMNS}`,
             [hashedPassword, row.id]
         );
 
-        const user = updated.rows[0];
+        const user = publicUser(updated.rows[0]);
         res.json({ user, token: generateToken(user) });
     } catch (err) {
         console.error('Reset password error:', err);
@@ -259,22 +277,30 @@ router.post('/reset-password', async (req, res) => {
 router.get('/me', verifyToken, async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT id, name, email, role, created_at FROM users WHERE id = $1',
+            `SELECT ${USER_COLUMNS} FROM users WHERE id = $1`,
             [req.user.id]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Không tìm thấy user' });
         }
-        res.json({ user: result.rows[0] });
+        res.json({ user: publicUser(result.rows[0]) });
     } catch (err) {
         console.error('Get me error:', err);
         res.status(500).json({ error: 'Lỗi server' });
     }
 });
 
-// PATCH /api/auth/me - body: { name }. Đổi tên hiển thị
+// Trường chuỗi tuỳ chọn: không gửi (undefined) -> null = giữ nguyên, chuỗi rỗng = xoá
+const optionalText = (v) => (v === undefined ? null : String(v).trim());
+
+// PATCH /api/auth/me - body: { name, phone?, city?, ward?, street? }. Cập nhật thông tin cá nhân
 router.patch('/me', verifyToken, async (req, res) => {
     const name = String(req.body.name || '').trim();
+    const phoneRaw = optionalText(req.body.phone);
+    const city = optionalText(req.body.city);
+    const ward = optionalText(req.body.ward);
+    const street = optionalText(req.body.street);
+
     if (!name) {
         return res.status(400).json({ error: 'Tên không được để trống' });
     }
@@ -282,15 +308,36 @@ router.patch('/me', verifyToken, async (req, res) => {
         return res.status(400).json({ error: 'Tên tối đa 100 ký tự' });
     }
 
+    // Cùng cách chuẩn hoá SĐT với đặt hàng
+    const phone = phoneRaw === null ? null : phoneRaw.replace(/[\s.-]/g, '').replace(/^\+84/, '0');
+    if (phone && !/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
+        return res.status(400).json({ error: 'Số điện thoại không hợp lệ' });
+    }
+    if (city && !DELIVERY_CITIES.includes(city)) {
+        return res.status(400).json({ error: 'Hiện chỉ giao tại Hà Nội và TP.HCM' });
+    }
+    if (ward && ward.length > 100) {
+        return res.status(400).json({ error: 'Phường/xã quá dài' });
+    }
+    if (street && (street.length < 5 || street.length > 150)) {
+        return res.status(400).json({ error: 'Địa chỉ cụ thể dài từ 5 đến 150 ký tự' });
+    }
+
     try {
         const result = await pool.query(
-            'UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, email, role, created_at',
-            [name, req.user.id]
+            `UPDATE users SET
+                name = $1,
+                phone = CASE WHEN $2::text IS NULL THEN phone ELSE NULLIF($2::text, '') END,
+                city = CASE WHEN $3::text IS NULL THEN city ELSE NULLIF($3::text, '') END,
+                ward = CASE WHEN $4::text IS NULL THEN ward ELSE NULLIF($4::text, '') END,
+                street = CASE WHEN $5::text IS NULL THEN street ELSE NULLIF($5::text, '') END
+             WHERE id = $6 RETURNING ${USER_COLUMNS}`,
+            [name, phone, city, ward, street, req.user.id]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Không tìm thấy user' });
         }
-        res.json({ user: result.rows[0], message: 'Đã cập nhật thông tin' });
+        res.json({ user: publicUser(result.rows[0]), message: 'Đã cập nhật thông tin' });
     } catch (err) {
         console.error('Update me error:', err);
         res.status(500).json({ error: 'Lỗi server khi cập nhật thông tin' });

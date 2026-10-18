@@ -53,8 +53,9 @@ export function AuthProvider({ children }) {
         return data.user;
     }
 
-    async function updateProfile(name) {
-        const data = await updateProfileRequest({ name, token });
+    // profile: { name, phone, city, ward, street }
+    async function updateProfile(profile) {
+        const data = await updateProfileRequest({ profile, token });
         setUser(data.user);
         return data.user;
     }

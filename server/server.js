@@ -71,6 +71,12 @@ pool.query(`
 
     -- Email nhận thông báo đơn hàng, đơn cũ để NULL
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+
+    -- Thông tin giao hàng lưu ở hồ sơ để tự điền form đặt hàng (địa chỉ tách 3 phần như form)
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS ward VARCHAR(100);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS street VARCHAR(150);
 `)
     .then(() => {
         app.listen(PORT, () => {

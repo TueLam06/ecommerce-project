@@ -104,6 +104,24 @@ function CheckoutPage() {
         if (error) setError(null);
     }
 
+    // Hồ sơ có SĐT hoặc địa chỉ thì mới hiện nút tự điền
+    const hasProfileInfo = Boolean(user && (user.phone || user.street));
+
+    // Điền form từ hồ sơ; ô nào hồ sơ chưa có thì giữ nguyên giá trị đang nhập
+    function autofillFromProfile() {
+        setFormData((prev) => ({
+            name: user.name || prev.name,
+            phone: user.phone || prev.phone,
+            email: user.email || prev.email,
+            city: user.city || prev.city,
+            ward: user.city ? user.ward : prev.ward,
+            street: user.street || prev.street,
+        }));
+        setError(null);
+        // Hiện lỗi ngay cho ô còn thiếu (VD hồ sơ chưa có phường/xã)
+        setTouched({ name: true, phone: true, email: true, city: true, ward: true, street: true });
+    }
+
     function markTouched(name) {
         setTouched((prev) => ({ ...prev, [name]: true }));
     }
@@ -263,6 +281,34 @@ function CheckoutPage() {
                 <p style={inter} className="text-[#6B6F63] mb-8">
                     Chúng tôi sẽ liên hệ qua số điện thoại này để xác nhận đơn.
                 </p>
+
+                {user && (
+                    <div
+                        style={inter}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#DAD6C9] bg-white px-4 py-3 mb-8"
+                    >
+                        {hasProfileInfo ? (
+                            <>
+                                <span className="text-sm text-[#6B6F63]">Dùng thông tin đã lưu trong hồ sơ của bạn.</span>
+                                <button
+                                    type="button"
+                                    onClick={autofillFromProfile}
+                                    className="px-4 py-2 text-sm font-medium rounded-sm border border-[#2F5233] text-[#2F5233] hover:bg-[#2F5233] hover:text-[#F5F3EE] transition-colors"
+                                >
+                                    Tự động điền
+                                </button>
+                            </>
+                        ) : (
+                            <span className="text-sm text-[#6B6F63]">
+                                Lưu SĐT và địa chỉ trong{" "}
+                                <Link to="/profile" className="text-[#2F5233] underline underline-offset-2">
+                                    hồ sơ
+                                </Link>{" "}
+                                để điền nhanh lần sau.
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} noValidate style={inter} className="space-y-6">
                     <div>

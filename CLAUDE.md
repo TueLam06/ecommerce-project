@@ -32,7 +32,7 @@ cd client && npm install && npm run dev   # http://localhost:5173
 - `config/`: `db.js` (Pool), `cloudinary.js`, `gemini.js` (LangChain + Gemini cho chatbot).
 - `utils/token.js`: JWT đăng nhập; token xác thực email ký bằng secret riêng (`JWT_SECRET + ':verify-email'`) và gắn dấu vân tay mật khẩu, để không dùng thay token đăng nhập được và tự hết hiệu lực khi đăng ký lại.
 - `utils/mailer.js`: gửi mail qua **Brevo HTTP API**. Thiếu `BREVO_API_KEY` thì chỉ in nội dung mail ra console (tiện test local).
-- Bảng chính: `users` (có `role`, `email_verified`), `products`, `categories`, `cart_items`, `orders`, `order_items`.
+- Bảng chính: `users` (có `role`, `email_verified`, và `phone`, `city`, `ward`, `street` là thông tin giao hàng lưu ở hồ sơ), `products`, `categories`, `cart_items`, `orders`, `order_items`.
 - Lỗi trả về dạng JSON `{ error }` hoặc `{ message }`, thông báo bằng tiếng Việt.
 
 ### Client
@@ -47,6 +47,7 @@ cd client && npm install && npm run dev   # http://localhost:5173
 
 - **Đăng ký → xác thực email**: đăng ký tạo user `email_verified = false` và gửi link `${CLIENT_URL}/verify-email?token=...` (hết hạn 24h). Chưa xác thực thì login trả `403` với `code: EMAIL_NOT_VERIFIED`. Bấm link thì xác thực và đăng nhập luôn. Email chưa xác thực được đăng ký lại (ghi đè tên/mật khẩu, link cũ hết hiệu lực). Tài khoản tạo trước tính năng này được coi là đã xác thực.
 - **Quên mật khẩu**: `forgot-password` luôn trả cùng một câu và không chờ gửi mail (không lộ email nào tồn tại). Link `${CLIENT_URL}/reset-password?token=...` hết hạn 30 phút, ký bằng `JWT_SECRET + ':reset-password'` và gắn dấu vân tay mật khẩu nên chỉ dùng được 1 lần. Đặt lại xong thì đăng nhập luôn và coi email là đã xác thực.
+- **Hồ sơ** (`/profile`, cần đăng nhập): xem/sửa họ tên, SĐT, địa chỉ (`PATCH /api/auth/me`, trường không gửi thì giữ nguyên, chuỗi rỗng thì xoá; địa chỉ đủ thành phố + phường/xã + số nhà hoặc để trống hết) và đổi mật khẩu (`POST /api/auth/change-password`, cần mật khẩu hiện tại). Mọi response trả `user` đều qua `publicUser()` để có đủ các trường này. Checkout có nút **Tự động điền** lấy từ hồ sơ, không tự điền khi vừa mở trang.
 - **Đặt hàng**: `POST /api/orders` nhận cả khách vãng lai (gửi `cart` trong body) lẫn user đăng nhập (lấy giỏ từ DB). Bắt buộc có `email` (lưu ở `orders.email`, đơn cũ NULL), gửi mail xác nhận sau khi commit, mail lỗi không làm hỏng đơn. Trừ tồn kho trong transaction với `SELECT ... FOR UPDATE`. Số lượng mỗi sản phẩm 1–20, tối đa 50 sản phẩm/đơn. Chỉ giao Hà Nội và TP.HCM.
 - **Rate limit**: chung 200 req/phút/IP; login sai 5 lần/15 phút (IP + email); đăng ký 10 lần thành công/giờ; gửi lại mail xác thực 3 lần/15 phút; quên mật khẩu 3 lần/15 phút; đổi mật khẩu sai 5 lần/15 phút/user; đặt hàng 5 đơn/10 phút; chatbot 10 tin/phút; tra cứu đơn 10 lần/phút.
 
