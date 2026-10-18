@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { loginRequest, registerRequest, getMeRequest, verifyEmailRequest, resetPasswordRequest } from '../api/auth';
+import { loginRequest, registerRequest, getMeRequest, verifyEmailRequest, resetPasswordRequest, updateProfileRequest, changePasswordRequest } from '../api/auth';
 import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }) {
@@ -53,6 +53,16 @@ export function AuthProvider({ children }) {
         return data.user;
     }
 
+    async function updateProfile(name) {
+        const data = await updateProfileRequest({ name, token });
+        setUser(data.user);
+        return data.user;
+    }
+
+    function changePassword(currentPassword, newPassword) {
+        return changePasswordRequest({ currentPassword, newPassword, token });
+    }
+
     function logout() {
         localStorage.removeItem('token');
         setToken(null);
@@ -60,7 +70,7 @@ export function AuthProvider({ children }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, verifyEmail, resetPassword, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, verifyEmail, resetPassword, updateProfile, changePassword, logout }}>
             {children}
         </AuthContext.Provider>
     );

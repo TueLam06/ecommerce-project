@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import MyOrderDetailPage from "./pages/MyOrderDetailPage";
+import ProfilePage from "./pages/ProfilePage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -52,6 +53,10 @@ function App() {
                                             <Route path="/verify-email" element={<VerifyEmailPage />} />
                                             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                                             <Route path="/reset-password" element={<ResetPasswordPage />} />
+                                            <Route
+                                                path="/profile"
+                                                element={<PrivateRoute><ProfilePage /></PrivateRoute>}
+                                            />
                                             <Route
                                                 path="/orders"
                                                 element={<PrivateRoute><OrderHistoryPage /></PrivateRoute>}

@@ -19,3 +19,9 @@ export const forgotPasswordRequest = (email) =>
 
 export const resetPasswordRequest = ({ token, password }) =>
     authFetch('/api/auth/reset-password', { method: 'POST', body: { token, password } });
+
+export const updateProfileRequest = ({ name, token }) =>
+    authFetch('/api/auth/me', { method: 'PATCH', body: { name }, token });
+
+export const changePasswordRequest = ({ currentPassword, newPassword, token }) =>
+    authFetch('/api/auth/change-password', { method: 'POST', body: { currentPassword, newPassword }, token });

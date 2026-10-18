@@ -52,9 +52,9 @@ function Header({ title }) {
                         <Link to="/orders" className={linkClass}>
                             Đơn hàng của tôi
                         </Link>
-            <span className="text-sm text-[#6B6B65]">
-              Xin chào, {user.name}
-            </span>
+                        <Link to="/profile" className="text-sm text-[#6B6B65] hover:text-[#2F5233] transition-colors">
+                            Xin chào, {user.name}
+                        </Link>
                         <button
                             onClick={handleLogout}
                             className="rounded-md bg-[#2F5233] text-[#F5F3EE] px-4 py-2 text-sm font-medium hover:bg-[#244027] transition-colors"

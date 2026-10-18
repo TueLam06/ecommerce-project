@@ -48,7 +48,7 @@ cd client && npm install && npm run dev   # http://localhost:5173
 - **Đăng ký → xác thực email**: đăng ký tạo user `email_verified = false` và gửi link `${CLIENT_URL}/verify-email?token=...` (hết hạn 24h). Chưa xác thực thì login trả `403` với `code: EMAIL_NOT_VERIFIED`. Bấm link thì xác thực và đăng nhập luôn. Email chưa xác thực được đăng ký lại (ghi đè tên/mật khẩu, link cũ hết hiệu lực). Tài khoản tạo trước tính năng này được coi là đã xác thực.
 - **Quên mật khẩu**: `forgot-password` luôn trả cùng một câu và không chờ gửi mail (không lộ email nào tồn tại). Link `${CLIENT_URL}/reset-password?token=...` hết hạn 30 phút, ký bằng `JWT_SECRET + ':reset-password'` và gắn dấu vân tay mật khẩu nên chỉ dùng được 1 lần. Đặt lại xong thì đăng nhập luôn và coi email là đã xác thực.
 - **Đặt hàng**: `POST /api/orders` nhận cả khách vãng lai (gửi `cart` trong body) lẫn user đăng nhập (lấy giỏ từ DB). Bắt buộc có `email` (lưu ở `orders.email`, đơn cũ NULL), gửi mail xác nhận sau khi commit, mail lỗi không làm hỏng đơn. Trừ tồn kho trong transaction với `SELECT ... FOR UPDATE`. Số lượng mỗi sản phẩm 1–20, tối đa 50 sản phẩm/đơn. Chỉ giao Hà Nội và TP.HCM.
-- **Rate limit**: chung 200 req/phút/IP; login sai 5 lần/15 phút (IP + email); đăng ký 10 lần thành công/giờ; gửi lại mail xác thực 3 lần/15 phút; quên mật khẩu 3 lần/15 phút; đặt hàng 5 đơn/10 phút; chatbot 10 tin/phút; tra cứu đơn 10 lần/phút.
+- **Rate limit**: chung 200 req/phút/IP; login sai 5 lần/15 phút (IP + email); đăng ký 10 lần thành công/giờ; gửi lại mail xác thực 3 lần/15 phút; quên mật khẩu 3 lần/15 phút; đổi mật khẩu sai 5 lần/15 phút/user; đặt hàng 5 đơn/10 phút; chatbot 10 tin/phút; tra cứu đơn 10 lần/phút.
 
 ## Deploy
 

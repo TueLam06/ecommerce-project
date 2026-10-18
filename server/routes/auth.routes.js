@@ -19,6 +19,7 @@ const {
     registerLimiter,
     resendVerificationLimiter,
     forgotPasswordLimiter,
+    changePasswordLimiter,
 } = require('../middleware/rateLimit.middleware');
 
 const SALT_ROUNDS = 10;
@@ -268,6 +269,66 @@ router.get('/me', verifyToken, async (req, res) => {
     } catch (err) {
         console.error('Get me error:', err);
         res.status(500).json({ error: 'Lỗi server' });
+    }
+});
+
+// PATCH /api/auth/me - body: { name }. Đổi tên hiển thị
+router.patch('/me', verifyToken, async (req, res) => {
+    const name = String(req.body.name || '').trim();
+    if (!name) {
+        return res.status(400).json({ error: 'Tên không được để trống' });
+    }
+    if (name.length > 100) {
+        return res.status(400).json({ error: 'Tên tối đa 100 ký tự' });
+    }
+
+    try {
+        const result = await pool.query(
+            'UPDATE users SET name = $1 WHERE id = $2 RETURNING id, name, email, role, created_at',
+            [name, req.user.id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Không tìm thấy user' });
+        }
+        res.json({ user: result.rows[0], message: 'Đã cập nhật thông tin' });
+    } catch (err) {
+        console.error('Update me error:', err);
+        res.status(500).json({ error: 'Lỗi server khi cập nhật thông tin' });
+    }
+});
+
+// POST /api/auth/change-password - body: { currentPassword, newPassword }
+// Đổi xong thì link xác thực/đặt lại mật khẩu cũ tự hết hiệu lực (dấu vân tay mật khẩu đổi)
+router.post('/change-password', verifyToken, changePasswordLimiter, async (req, res) => {
+    const currentPassword = String(req.body.currentPassword || '');
+    const newPassword = String(req.body.newPassword || '');
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Thiếu mật khẩu hiện tại hoặc mật khẩu mới' });
+    }
+    if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'Password phải có ít nhất 6 ký tự' });
+    }
+    if (newPassword === currentPassword) {
+        return res.status(400).json({ error: 'Mật khẩu mới phải khác mật khẩu hiện tại' });
+    }
+
+    try {
+        const found = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
+        const row = found.rows[0];
+        if (!row) {
+            return res.status(404).json({ error: 'Không tìm thấy user' });
+        }
+        if (!(await bcrypt.compare(currentPassword, row.password))) {
+            return res.status(400).json({ error: 'Mật khẩu hiện tại không đúng' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, req.user.id]);
+        res.json({ message: 'Đã đổi mật khẩu' });
+    } catch (err) {
+        console.error('Change password error:', err);
+        res.status(500).json({ error: 'Lỗi server khi đổi mật khẩu' });
     }
 });
 

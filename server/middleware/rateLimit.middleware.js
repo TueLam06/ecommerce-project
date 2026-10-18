@@ -59,6 +59,15 @@ const forgotPasswordLimiter = createLimiter({
     message: 'Bạn yêu cầu đặt lại mật khẩu quá nhiều lần, vui lòng thử lại sau 15 phút',
 });
 
+// Đổi mật khẩu: tối đa 5 lần SAI / 15 phút / user (chặn dò mật khẩu cũ bằng token bị lộ)
+const changePasswordLimiter = createLimiter({
+    windowMs: 15 * 60_000,
+    limit: 5,
+    skipSuccessfulRequests: true,
+    keyGenerator: (req) => (req.user ? `user:${req.user.id}` : ipKeyGenerator(req.ip)),
+    message: 'Bạn nhập sai mật khẩu hiện tại quá nhiều lần, vui lòng thử lại sau 15 phút',
+});
+
 // Đặt hàng: 5 đơn / 10 phút, theo user nếu đã đăng nhập, theo IP nếu là khách
 const orderLimiter = createLimiter({
     windowMs: 10 * 60_000,
@@ -88,6 +97,7 @@ module.exports = {
     registerLimiter,
     resendVerificationLimiter,
     forgotPasswordLimiter,
+    changePasswordLimiter,
     orderLimiter,
     trackLimiter,
     chatLimiter,
