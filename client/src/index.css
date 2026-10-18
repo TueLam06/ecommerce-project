@@ -221,3 +221,79 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .variant-image-in { animation: none; }
 }
+
+/* ---------- Mascot rùa: thở, chớp mắt, nhích chân (steps để giật kiểu pixel) ---------- */
+.mascot-bob { animation: mascot-bob 1.6s steps(1) infinite; }
+.mascot-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mascot-blink 4s steps(1) infinite;
+}
+.mascot-leg-a { animation: mascot-leg-a 0.8s steps(1) infinite; }
+.mascot-leg-b { animation: mascot-leg-b 0.8s steps(1) infinite; }
+@keyframes mascot-bob {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(0.5px); }
+}
+@keyframes mascot-blink {
+  0%, 94% { transform: scaleY(1); }
+  95%, 98% { transform: scaleY(0.15); }
+  100% { transform: scaleY(1); }
+}
+@keyframes mascot-leg-a {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-0.5px); }
+}
+@keyframes mascot-leg-b {
+  0% { transform: translateY(-0.5px); }
+  50% { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-bob, .mascot-eye, .mascot-leg-a, .mascot-leg-b { animation: none; }
+}
+
+/* Mascot: gõ phím luân phiên, chữ bay lên, logo laptop, gói hàng rơi xuống mai */
+.mascot-hand-a { animation: mascot-leg-b 0.4s steps(1) infinite; }
+.mascot-hand-b { animation: mascot-leg-a 0.4s steps(1) infinite; }
+.mascot-logo { animation: mascot-glow 2s steps(1) infinite; }
+.mascot-spark { opacity: 0; animation: mascot-spark 1.2s steps(1) infinite; }
+.mascot-box-in { animation: mascot-box-in 0.4s steps(5) 1; }
+@keyframes mascot-glow {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes mascot-spark {
+  0% { opacity: 1; transform: translateY(0); }
+  33% { opacity: 1; transform: translateY(-1px); }
+  66% { opacity: 0; transform: translateY(-2px); }
+  100% { opacity: 0; }
+}
+@keyframes mascot-box-in {
+  from { transform: translateY(-6px); }
+  to { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-hand-a, .mascot-hand-b, .mascot-logo, .mascot-spark, .mascot-box-in { animation: none; }
+  .mascot-spark { opacity: 0; }
+}
+
+/* Mascot ngủ: nằm im, chữ z bay lên rồi mờ dần */
+.mascot-zzz { opacity: 0; animation: mascot-zzz 2.4s steps(4) infinite; }
+@keyframes mascot-zzz {
+  0% { opacity: 1; transform: translate(0, 0); }
+  75% { opacity: 1; transform: translate(1px, -2px); }
+  100% { opacity: 0; transform: translate(1px, -3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-zzz { animation: none; opacity: 1; }
+}
+
+/* Thông báo thêm vào giỏ: trượt vào từ phải */
+.toast-in { animation: toast-in 0.25s ease-out; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-in { animation: none; }
+}

@@ -3,6 +3,7 @@ import { CartProvider } from "./context/CartProvider";
 import { AuthProvider } from "./context/AuthProvider";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Mascot from "./components/Mascot";
 import HomePage from "./pages/HomePage";
 import ChatPage from "./pages/ChatPage";
 import ProductsPage from "./pages/ProductsPage";
@@ -68,6 +69,8 @@ function App() {
                                         </Routes>
                                     </main>
                                     <Footer title="Stuff Corner" />
+                                    {/* Cố định ở góc phải, đứng trên mép dưới màn hình, không cuộn theo trang */}
+                                    <Mascot className="fixed bottom-0 right-4 z-40 pointer-events-none hidden sm:block" />
                                 </div>
                             }
                         />
